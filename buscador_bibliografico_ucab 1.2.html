@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Buscador Bibliográfico UCAB</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css" integrity="sha512-AYV0ha03c5r+C3/Wg9U/+HFGEJnSFNnKTLeDgkX2GupEc+8kIpi8tEXpQQDDsC72ERkTrOZzgeLWHn8hfc/MwA==" crossorigin="anonymous">
 <style>
 :root{--bg:#fff;--bg2:#f5f5f4;--bg3:#ebebea;--text:#1a1a18;--text2:#6b6b67;--text3:#a3a39f;--border:rgba(0,0,0,.12);--border2:rgba(0,0,0,.22);--info-bg:#e6f1fb;--info-text:#0c447c;--success-bg:#eaf3de;--success-text:#3b6d11;--warning-bg:#faeeda;--warning-text:#854f0b;--error-bg:#fde8e8;--error-text:#9b1c1c;--r-md:8px;--r-lg:12px;}
 @media(prefers-color-scheme:dark){:root{--bg:#1c1c1a;--bg2:#252522;--bg3:#2e2e2b;--text:#f0efeb;--text2:#a3a39f;--text3:#6b6b67;--border:rgba(255,255,255,.1);--border2:rgba(255,255,255,.2);--info-bg:#042c53;--info-text:#85b7eb;--success-bg:#173404;--success-text:#97c459;--warning-bg:#412402;--warning-text:#ef9f27;--error-bg:#3b0c0c;--error-text:#f87171;}}
@@ -124,6 +124,10 @@ tr.row-notfound:hover td{opacity:.75;background:var(--bg2);}
 .ind-exact{background:var(--success-text);}
 .ind-partial{background:var(--warning-text);}
 .ind-notfound{background:var(--error-text);opacity:.6;}
+.ind-ambiguous{background:#ea580c;}
+.stat-ambiguous .doc-stat-num{color:#c2410c;}
+.chips-label.label-ambiguous{color:#c2410c;}
+@media(prefers-color-scheme:dark){.stat-ambiguous .doc-stat-num,.chips-label.label-ambiguous{color:#fb923c;}.ind-ambiguous{background:#f97316;}}
 .td-cod{font-family:monospace;font-size:12px;color:var(--text2);max-width:70px;}
 .td-titulo{font-weight:500;max-width:220px;}
 .td-autor{max-width:150px;}
@@ -285,6 +289,7 @@ footer{text-align:center;font-size:12px;color:var(--text3);padding:2rem 0 1.5rem
         <div class="doc-stats-row">
           <div class="doc-stat stat-found"><div class="doc-stat-num" id="stat-found">0</div><div class="doc-stat-label">coinciden con BD</div></div>
           <div class="doc-stat stat-naauthor" id="stat-naauthor-cell" style="display:none"><div class="doc-stat-num" id="stat-naauthor">0</div><div class="doc-stat-label">coinciden (autor N/A)</div></div>
+          <div class="doc-stat stat-ambiguous" id="stat-ambiguous-cell" style="display:none"><div class="doc-stat-num" id="stat-ambiguous">0</div><div class="doc-stat-label">varias ediciones</div></div>
           <div class="doc-stat stat-notfound" id="stat-notfound-cell" style="display:none"><div class="doc-stat-num" id="stat-notfound">0</div><div class="doc-stat-label">no están en texto</div></div>
           <div class="doc-stat stat-total" id="stat-total-cell" style="display:none"><div class="doc-stat-num" id="stat-total">0</div><div class="doc-stat-label">en el filtro</div></div>
           <div class="doc-stat stat-textnotindb" id="stat-textnotindb-cell" style="display:none"><div class="doc-stat-num" id="stat-textnotindb">0</div><div class="doc-stat-label">texto sin coincidencia</div></div>
@@ -300,6 +305,12 @@ footer{text-align:center;font-size:12px;color:var(--text3);padding:2rem 0 1.5rem
           <div class="chips-label label-naauthor"><i class="ti ti-user-off" aria-hidden="true" style="font-size:13px"></i><span id="naauthor-label">Coinciden con la BD — autor sin registrar (N/A)</span></div>
           <p style="font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.5">Estas referencias coinciden con un registro de la base de datos, pero ese registro tiene el autor marcado como N/A, por lo que la coincidencia no se pudo confirmar por autor. Conviene revisarlas.</p>
           <div id="doc-naauthor-table"></div>
+        </div>
+        <!-- Tabla: varias ediciones del mismo título — no se pudo distinguir cuál -->
+        <div class="doc-chips-section" id="ambiguous-section" style="display:none">
+          <div class="chips-label label-ambiguous"><i class="ti ti-versions" aria-hidden="true" style="font-size:13px"></i><span id="ambiguous-label">Varias ediciones — verificar</span></div>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.5">La referencia coincide con varios registros del mismo título (distintas ediciones) y la cita no trae año para distinguirlos. Se listan todas las ediciones candidatas; verifica cuál corresponde.</p>
+          <div id="ambiguous-table"></div>
         </div>
         <!-- Chips: BD → texto (no encontradas, solo con filtro) -->
         <div class="doc-chips-section" id="notfound-chips-section" style="display:none">
@@ -351,9 +362,9 @@ footer{text-align:center;font-size:12px;color:var(--text3);padding:2rem 0 1.5rem
   <footer>Buscador Bibliográfico UCAB · Datos almacenados localmente en tu navegador</footer>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha512-r22gChDnGvBylk90+2e/ycr3RVrDi8DIOkIGNhJlKfuyQM4tIRAI062MaV8sfjQKYVGjOBaZBOA87z+IhZE9DA==" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js" integrity="sha512-sG5Q7boJL+ft/weuz6Mmi9XBD+bEzE9AI2FMP4YMFxp3FpTFUQSQQm5K5cSgJCyed6bWs3W8f8h0lp36lHXhQA==" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" integrity="sha512-q+4liFwdPC/bNdhUpZx6aXDx/h77yEQtn4I1slHydcbZK34nLaR3cAeYSJshoxIOq3mjEf7xJE8YWIUHMn+oCQ==" crossorigin="anonymous"></script>
 <script>
 if(typeof pdfjsLib!=='undefined') pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
@@ -369,6 +380,7 @@ let textNotInDB=[];   // líneas del texto sin coincidencia en la BD
 let inDBNotFilter=[]; // líneas del texto en BD pero fuera del filtro activo
 let naAuthorList=[];  // {raw,match} de coincidencias cuyo autor en la BD es N/A
 let docFoundList=[];  // {raw,match} de líneas del texto que coinciden dentro del filtro
+let ambiguousList=[]; // {raw,matches:[...]} referencias que empatan entre varias ediciones del mismo título
 let docSummaryArgs=null; // args del último renderDocSummary para poder restaurarlo
 
 // ── Uploads Excel ──────────────────────────────────────────────────────────
@@ -446,7 +458,7 @@ function fmtDate(iso){try{const d=new Date(iso);return d.toLocaleDateString('es-
 function isBlank(v){return!v||['N/A','n/a','s.n.','s.f.','—'].includes(String(v).trim());}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function trunc(s,n){s=String(s||'');return s.length>n?s.slice(0,n-1)+'…':s;}
-function renderUrl(v){if(isBlank(v))return'<span style="color:var(--text3)">—</span>';const u=String(v).trim();return`<a href="${esc(u)}" target="_blank" rel="noopener" class="url-link"><i class="ti ti-external-link" aria-hidden="true" style="font-size:11px;flex-shrink:0"></i>${esc(trunc(u.replace(/^https?:\/\//,''),30))}</a>`;}
+function renderUrl(v){if(isBlank(v))return'<span style="color:var(--text3)">—</span>';const u=String(v).trim();if(!/^https?:\/\//i.test(u))return`<span style="color:var(--text2)">${esc(trunc(u,30))}</span>`;return`<a href="${esc(u)}" target="_blank" rel="noopener" class="url-link"><i class="ti ti-external-link" aria-hidden="true" style="font-size:11px;flex-shrink:0"></i>${esc(trunc(u.replace(/^https?:\/\//,''),30))}</a>`;}
 function getCell(row,key){return norm(row[colMap[key]]||'');}
 
 // ── Algoritmo de coincidencia ────────────────────────────────────────────────
@@ -469,77 +481,6 @@ function titleWords(titulo){
 function autorSignals(row){
   const a=normM(String(row[colMap.autor]||''));
   return a?a.split(' ').filter(p=>p.length>=4):[];
-}
-
-// ── matchRecord: compara un registro de BD contra un segmento de texto ───────
-// Reglas estrictas para evitar falsos positivos:
-//  · El AÑO solo nunca confirma un match — se requiere AUTOR
-//  · Títulos cortos (<18 chars) necesitan autor incluso en coincidencia exacta
-//  · Títulos de 1 palabra clave no matchean por palabras (solo por exacto + autor)
-function matchRecord(row, input, inputTokens){
-  const tokens=inputTokens||new Set(input.split(' '));
-  const titulo=normM(String(row[colMap.titulo]||''));
-  if(!titulo||titulo.length<5) return null;
-
-  // Señales externas (autor y año por palabra completa, no por subcadena,
-  // para evitar falsos positivos como un apellido incrustado en otra palabra)
-  const aSigs=autorSignals(row);
-  const autorHit=aSigs.length>0&&aSigs.some(p=>tokens.has(p));
-
-  const año=String(row[colMap.año]||'').trim();
-  const añoHit=/^\d{4}$/.test(año)&&tokens.has(año);
-
-  // ISBN: señal definitiva
-  const isbn=normM(String(row[colMap.isbn]||'')).replace(/\s/g,'');
-  if(isbn.length>=10&&input.replace(/\s/g,'').includes(isbn)) return'exact';
-
-  // ── 1. Guard de frase contigua (anti-falsos-positivos) ───────────────────
-  // Para títulos ≥15 chars: exige que al menos 12 caracteres CONSECUTIVOS del
-  // título aparezcan juntos en el texto. Elimina coincidencias por palabras
-  // dispersas que coinciden casualmente (ej: "Curso de teoría del derecho"
-  // vs "Curso de Redacción [...] Teoría y Práctica [...]").
-  if(titulo.length>=15){
-    const parts=titulo.split(/\s+/);
-    let phraseOk=false;
-    for(let s=0;s<parts.length&&!phraseOk;s++){
-      let ph='';
-      for(let e=s;e<parts.length;e++){
-        ph=ph?ph+' '+parts[e]:parts[e];
-        if(ph.length>=12&&input.includes(ph)){phraseOk=true;break;}
-      }
-    }
-    if(!phraseOk) return null; // Palabras dispersas → coincidencia no fiable
-  }
-
-  // ── 2. Coincidencia exacta del título ────────────────────────────────────
-  if(input.includes(titulo)){
-    // Título largo (≥18 chars): muy distintivo, acepta sin confirmación
-    if(titulo.length>=18) return'exact';
-    // Título medio (≥10 chars): necesita autor
-    if(titulo.length>=10&&autorHit) return'partial';
-    // Título corto (<10 chars): no es suficientemente distintivo
-    return null;
-  }
-
-  // ── 2. Coincidencia por palabras clave ───────────────────────────────────
-  const words=titleWords(titulo);
-  // Con menos de 2 palabras clave, solo vale el match exacto (ya descartado)
-  if(words.length<2) return null;
-
-  const present=words.filter(w=>input.includes(w));
-  const ratio=present.length/words.length;
-  if(ratio===0) return null;
-
-  // Ratio muy alto + autor → exacto
-  if(ratio>=0.85&&words.length>=3&&autorHit) return'exact';
-
-  // Ratio bueno → AUTOR obligatorio (año solo no es suficiente)
-  if(ratio>=0.65&&words.length>=2&&autorHit) return'partial';
-
-  // Ratio medio → necesita AMBOS (autor y año)
-  if(ratio>=0.50&&words.length>=2&&autorHit&&añoHit) return'partial';
-
-  return null;
 }
 
 // ── Meta precalculada por registro (acelera el scoring) ──────────────────────
@@ -605,8 +546,8 @@ function docMatchTableHTML(list){
     const año =isBlank(match[colMap.año])?'—':esc(String(match[colMap.año]));
     const cur =esc(String(match[colMap.curso]||'—'));
     const area=esc(String(match[colMap.area]||'—'));
-    const url =match[colMap.url];
-    const urlCell=isBlank(url)?'—':`<a href="${esc(String(url).trim())}" target="_blank" rel="noopener" class="url-link"><i class="ti ti-external-link" aria-hidden="true" style="font-size:11px"></i>${esc(trunc(String(url).trim().replace(/^https?:\/\//,''),22))}</a>`;
+    const url =match[colMap.url], uu=isBlank(url)?'':String(url).trim();
+    const urlCell=!uu?'—':(!/^https?:\/\//i.test(uu)?esc(trunc(uu,22)):`<a href="${esc(uu)}" target="_blank" rel="noopener" class="url-link"><i class="ti ti-external-link" aria-hidden="true" style="font-size:11px"></i>${esc(trunc(uu.replace(/^https?:\/\//,''),22))}</a>`);
     return`<tr>
       <td style="font-size:11px;color:var(--text2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(raw)}">${esc(trunc(raw,48))}</td>
       <td class="td-cod">${cod}</td>
@@ -654,7 +595,7 @@ function docSearch(){
     document.getElementById('doc-summary-box').style.display='none';
     filteredData=subset.length<allData.length?subset:[...allData];
     docMode=false;docFilterActive=false;matchQuality=new Map();
-    docFoundList=[];inDBNotFilter=[];naAuthorList=[];textNotInDB=[];
+    docFoundList=[];inDBNotFilter=[];naAuthorList=[];textNotInDB=[];ambiguousList=[];
     currentPage=1;renderResults();return;
   }
 
@@ -685,20 +626,30 @@ function docSearch(){
     const metaSub = hasFilter ? metaAll.filter(m=>subsetSet.has(m.r)) : metaAll;
 
     matchQuality=new Map();
-    docFoundList=[]; inDBNotFilter=[]; naAuthorList=[]; textNotInDB=[];
+    docFoundList=[]; inDBNotFilter=[]; naAuthorList=[]; textNotInDB=[]; ambiguousList=[];
     const matchedRecs=new Set();
 
     for(const p of linePairs){
-      // 1) mejor coincidencia dentro del filtro
-      let best=null;
-      for(const m of metaSub){ const s=scoreMeta(m,p.norm,p.tokens); if(s&&(!best||s.score>best.score)) best={s,m}; }
+      // 1) candidatos dentro del filtro
+      let cands=[];
+      for(const m of metaSub){ const s=scoreMeta(m,p.norm,p.tokens); if(s) cands.push({s,m}); }
       let where='filter';
       // 2) si no hay y hay filtro, buscar en toda la BD
-      if(!best && hasFilter){
-        for(const m of metaAll){ const s=scoreMeta(m,p.norm,p.tokens); if(s&&(!best||s.score>best.score)) best={s,m}; }
+      if(cands.length===0 && hasFilter){
+        for(const m of metaAll){ const s=scoreMeta(m,p.norm,p.tokens); if(s) cands.push({s,m}); }
         where='outside';
       }
-      if(!best){ textNotInDB.push(p.raw); continue; }
+      if(cands.length===0){ textNotInDB.push(p.raw); continue; }
+      let best=cands[0];
+      for(const c of cands) if(c.s.score>best.s.score) best=c;
+      // Empate de ediciones: varios registros con el MISMO título y el MISMO score
+      // (la cita no trae año que los distinga) → no elegir uno en silencio.
+      const ties=cands.filter(c=>c.s.score===best.s.score && c.m.titulo===best.m.titulo);
+      if(ties.length>=2){
+        ties.forEach(c=>{ matchedRecs.add(c.m.r); if(!matchQuality.has(c.m.r)) matchQuality.set(c.m.r,'ambiguous'); });
+        ambiguousList.push({raw:p.raw, matches:ties.map(c=>c.m.r)});
+        continue;
+      }
       const row=best.m.r;
       matchedRecs.add(row);
       if(!matchQuality.has(row)) matchQuality.set(row,best.s.q);
@@ -730,11 +681,11 @@ function docSearch(){
 
 function renderDocSummary(found, notFound, total, hasFilter){
   const box=document.getElementById('doc-summary-box');
-  if(docFoundList.length===0&&naAuthorList.length===0&&inDBNotFilter.length===0&&textNotInDB.length===0&&!hasFilter){box.style.display='none';return;}
+  if(docFoundList.length===0&&naAuthorList.length===0&&ambiguousList.length===0&&inDBNotFilter.length===0&&textNotInDB.length===0&&!hasFilter){box.style.display='none';return;}
   box.style.display='block';
 
   // ── Header (centrado en el texto: cada referencia se cuenta una sola vez) ───
-  const totalLines=docFoundList.length + inDBNotFilter.length + naAuthorList.length + textNotInDB.length;
+  const totalLines=docFoundList.length + inDBNotFilter.length + naAuthorList.length + ambiguousList.length + textNotInDB.length;
   document.getElementById('doc-summary-header').innerHTML=hasFilter
     ?`De <strong>${total.toLocaleString()}</strong> referencias en el filtro · <strong>${totalLines}</strong> referencias del texto analizadas`
     :`<strong>${totalLines}</strong> referencias del texto analizadas`;
@@ -767,6 +718,11 @@ function renderDocSummary(found, notFound, total, hasFilter){
     document.getElementById('stat-naauthor').textContent=naAuthorList.length;
     naCell.style.display='';
   } else { naCell.style.display='none'; }
+  const ambCell=document.getElementById('stat-ambiguous-cell');
+  if(ambiguousList.length>0){
+    document.getElementById('stat-ambiguous').textContent=ambiguousList.length;
+    ambCell.style.display='';
+  } else { ambCell.style.display='none'; }
 
   // ── Tabla: coinciden con la BD dentro del filtro (verde) ──────────────────
   const foundSection=document.getElementById('found-chips-section');
@@ -785,6 +741,16 @@ function renderDocSummary(found, notFound, total, hasFilter){
       `${naAuthorList.length} referencia${naAuthorList.length!==1?'s':''} coincide${naAuthorList.length!==1?'n':''} con la BD — autor sin registrar (N/A)`;
     document.getElementById('doc-naauthor-table').innerHTML=docMatchTableHTML(naAuthorList);
   } else { naSection.style.display='none'; }
+
+  // ── Tabla: varias ediciones del mismo título (naranja) ────────────────────
+  const ambSection=document.getElementById('ambiguous-section');
+  if(ambiguousList.length>0){
+    ambSection.style.display='';
+    document.getElementById('ambiguous-label').textContent=
+      `${ambiguousList.length} referencia${ambiguousList.length!==1?'s':''} con varias ediciones — verificar cuál corresponde`;
+    const flat=ambiguousList.flatMap(a=>a.matches.map(m=>({raw:a.raw,match:m})));
+    document.getElementById('ambiguous-table').innerHTML=docMatchTableHTML(flat);
+  } else { ambSection.style.display='none'; }
 
   // ── Chips: BD no encontradas en texto (filtro) ────────────────────────────
   const nfSection=document.getElementById('notfound-chips-section');
@@ -862,7 +828,7 @@ function clearDoc(){
   document.getElementById('doc-f-curso').value='';
   document.getElementById('doc-f-area').value='';
   document.getElementById('doc-f-codigo').value='';
-  matchQuality=new Map();textNotInDB=[];inDBNotFilter=[];naAuthorList=[];docFoundList=[];docSummaryArgs=null;docMode=false;docFilterActive=false;
+  matchQuality=new Map();textNotInDB=[];inDBNotFilter=[];naAuthorList=[];docFoundList=[];ambiguousList=[];docSummaryArgs=null;docMode=false;docFilterActive=false;
   filteredData=[...allData];currentPage=1;renderResults();
 }
 
@@ -902,6 +868,7 @@ function loadExcel(file){
       dismissBanner();showApp();renderResults();saveToStorage();
     }catch(err){alert('No se pudo leer el archivo.');}
   };
+  reader.onerror=()=>alert('No se pudo leer el archivo.');
   reader.readAsArrayBuffer(file);
 }
 
@@ -919,7 +886,7 @@ function resetApp(){
   allData=[];filteredData=[];currentPage=1;currentFileName='';
   colMap={codigo:null,titulo:null,autor:null,año:null,url:null,curso:null,area:null,isbn:null};
   matchQuality=new Map();docMode=false;docFilterActive=false;
-  textNotInDB=[];inDBNotFilter=[];naAuthorList=[];docFoundList=[];
+  textNotInDB=[];inDBNotFilter=[];naAuthorList=[];docFoundList=[];ambiguousList=[];
   // Borrar snapshots y volver a la pestaña inicial
   tabSnap.inteligente=null;tabSnap.exacta=null;tabSnap.documento=null;
   activeTab='inteligente';
@@ -946,6 +913,7 @@ function switchTab(tab){
     inDBNotFilter:[...inDBNotFilter],
     naAuthorList:[...naAuthorList],
     docFoundList:[...docFoundList],
+    ambiguousList:[...ambiguousList],
     currentPage,
     summaryArgs: activeTab==='documento' ? docSummaryArgs : null
   };
@@ -969,6 +937,7 @@ function switchTab(tab){
     inDBNotFilter   =[...s.inDBNotFilter];
     naAuthorList    =[...(s.naAuthorList||[])];
     docFoundList    =[...(s.docFoundList||[])];
+    ambiguousList   =[...(s.ambiguousList||[])];
     currentPage     =s.currentPage;
     // Restaurar resumen del documento si aplica
     if(tab==='documento'){
@@ -983,7 +952,7 @@ function switchTab(tab){
     filteredData=[...allData];
     matchQuality=new Map();
     docMode=false; docFilterActive=false;
-    textNotInDB=[]; inDBNotFilter=[]; naAuthorList=[]; docFoundList=[];
+    textNotInDB=[]; inDBNotFilter=[]; naAuthorList=[]; docFoundList=[]; ambiguousList=[];
     currentPage=1;
     if(tab==='documento') docSummaryArgs=null;
   }
@@ -1046,7 +1015,8 @@ function renderResults(){
     if(q==='exact') indClass='ind-exact';
     else if(q==='partial') indClass='ind-partial';
     else if(q==='notfound'){indClass='ind-notfound';rowClass='row-notfound';}
-    const indCell=`<td class="td-indicator ${indClass}" title="${q==='exact'?'Coincidencia exacta':q==='partial'?'Coincidencia parcial':q==='notfound'?'No encontrada en el documento':''}"></td>`;
+    else if(q==='ambiguous') indClass='ind-ambiguous';
+    const indCell=`<td class="td-indicator ${indClass}" title="${q==='exact'?'Coincidencia exacta':q==='partial'?'Coincidencia parcial':q==='notfound'?'No encontrada en el documento':q==='ambiguous'?'Varias ediciones — verificar':''}"></td>`;
     const c=esc(row[colMap.codigo]),t=esc(row[colMap.titulo]),a=esc(row[colMap.autor]),y=esc(row[colMap.año]),cr=esc(row[colMap.curso]),ar=esc(row[colMap.area]);
     return`<tr class="${rowClass}">${indCell}<td class="td-cod" title="${c}">${c||'—'}</td><td class="td-titulo" title="${t}">${t||'—'}</td><td class="td-autor" title="${a}">${a||'—'}</td><td class="td-año">${isBlank(y)?'—':y}</td><td class="td-url">${renderUrl(row[colMap.url])}</td><td class="td-curso" title="${cr}">${cr||'—'}</td><td class="td-area" title="${ar}">${ar||'—'}</td></tr>`;
   }).join('');
