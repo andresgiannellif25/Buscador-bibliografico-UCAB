@@ -1,0 +1,18 @@
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Claude Code (config local, no compartible)
+.claude/settings.local.json
+
+# Backups locales (versiones muertas del HTML)
+backups/

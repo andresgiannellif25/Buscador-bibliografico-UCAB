@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buscador Bibliográfico UCAB</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<style>
+:root{--bg:#fff;--bg2:#f5f5f4;--bg3:#ebebea;--text:#1a1a18;--text2:#6b6b67;--text3:#a3a39f;--border:rgba(0,0,0,.12);--border2:rgba(0,0,0,.22);--info-bg:#e6f1fb;--info-text:#0c447c;--success-bg:#eaf3de;--success-text:#3b6d11;--warning-bg:#faeeda;--warning-text:#854f0b;--error-bg:#fde8e8;--error-text:#9b1c1c;--r-md:8px;--r-lg:12px;}
+@media(prefers-color-scheme:dark){:root{--bg:#1c1c1a;--bg2:#252522;--bg3:#2e2e2b;--text:#f0efeb;--text2:#a3a39f;--text3:#6b6b67;--border:rgba(255,255,255,.1);--border2:rgba(255,255,255,.2);--info-bg:#042c53;--info-text:#85b7eb;--success-bg:#173404;--success-text:#97c459;--warning-bg:#412402;--warning-text:#ef9f27;--error-bg:#3b0c0c;--error-text:#f87171;}}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text);font-size:15px;min-height:100vh;}
+.container{max-width:1100px;margin:0 auto;padding:1.5rem 1rem;}
+header{background:var(--bg);border-bottom:.5px solid var(--border);padding:.875rem 0;position:sticky;top:0;z-index:10;}
+.hinner{max-width:1100px;margin:0 auto;padding:0 1rem;display:flex;align-items:center;justify-content:space-between;}
+.logo{font-size:16px;font-weight:500;display:flex;align-items:center;gap:8px;}
+.logo i{font-size:20px;color:var(--text2);}
+.card{background:var(--bg);border:.5px solid var(--border);border-radius:var(--r-lg);padding:1.5rem;margin-bottom:1.25rem;}
+#settings-panel{display:none;}
+.settings-title{font-size:14px;font-weight:500;margin-bottom:.75rem;}
+.api-row{display:flex;gap:8px;}
+.api-row input{flex:1;font-size:13px;}
+.api-note{font-size:12px;color:var(--text2);margin-top:8px;line-height:1.6;}
+.api-note a{color:var(--info-text);text-decoration:none;}
+#restore-banner{display:none;align-items:center;justify-content:space-between;gap:12px;background:var(--info-bg);border:.5px solid rgba(56,138,221,.3);border-radius:var(--r-md);padding:12px 16px;margin-bottom:1rem;flex-wrap:wrap;}
+.rb-left{display:flex;align-items:center;gap:10px;font-size:14px;}
+.rb-right{display:flex;gap:6px;flex-shrink:0;}
+#upload-zone{background:var(--bg);border:1.5px dashed var(--border2);border-radius:var(--r-lg);padding:3.5rem 1.5rem;text-align:center;cursor:pointer;transition:background .15s;margin-bottom:1.25rem;}
+#upload-zone:hover,#upload-zone.dragover{background:var(--bg2);}
+.upload-icon{font-size:48px;color:var(--text3);margin-bottom:.75rem;display:block;}
+#stats-bar{background:var(--bg);border:.5px solid var(--border);border-radius:var(--r-md);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;font-size:13px;gap:8px;flex-wrap:wrap;}
+.sb-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.badge{display:inline-flex;align-items:center;gap:4px;border-radius:20px;padding:2px 10px;font-size:12px;}
+.badge-success{background:var(--success-bg);color:var(--success-text);}
+.badge-warning{background:var(--warning-bg);color:var(--warning-text);}
+.tabs{display:flex;border-bottom:.5px solid var(--border);margin-bottom:1.25rem;overflow-x:auto;}
+.tab-btn{padding:9px 16px;font-size:14px;border:none;background:transparent;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-.5px;display:flex;align-items:center;gap:6px;transition:color .1s;font-family:inherit;white-space:nowrap;flex-shrink:0;}
+.tab-btn.active{color:var(--text);border-bottom-color:var(--text);font-weight:500;}
+.tab-btn:hover:not(.active){color:var(--text);}
+input,textarea{background:var(--bg);border:.5px solid var(--border2);border-radius:var(--r-md);padding:8px 12px;color:var(--text);font-family:inherit;font-size:14px;outline:none;transition:border-color .1s;}
+input:focus,textarea:focus{border-color:rgba(55,138,221,.5);box-shadow:0 0 0 3px rgba(55,138,221,.1);}
+textarea{width:100%;min-height:110px;resize:vertical;padding:10px 12px;line-height:1.5;}
+button{background:var(--bg);border:.5px solid var(--border2);border-radius:var(--r-md);padding:8px 14px;cursor:pointer;color:var(--text);font-family:inherit;font-size:14px;transition:background .1s;display:inline-flex;align-items:center;gap:5px;}
+button:hover:not(:disabled){background:var(--bg2);}
+button:active:not(:disabled){transform:scale(.98);}
+button:disabled{opacity:.4;cursor:not-allowed;}
+button.primary{background:var(--text);color:var(--bg);border-color:var(--text);}
+button.primary:hover:not(:disabled){opacity:.85;}
+button.sm{font-size:12px;padding:6px 10px;color:var(--text2);}
+.search-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin-bottom:10px;}
+.search-grid input{width:100%;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+#ai-status,#doc-status{font-size:13px;color:var(--text2);margin-top:8px;min-height:18px;}
+#ai-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.chip{display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:3px 12px;font-size:12px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0;}
+.chip-info{background:var(--info-bg);color:var(--info-text);}
+.chip-exact{background:var(--success-bg);color:var(--success-text);}
+.chip-partial{background:var(--warning-bg);color:var(--warning-text);}
+.chip-notfound{background:var(--error-bg);color:var(--error-text);}
+.no-api-msg{font-size:13px;color:var(--text2);background:var(--bg2);border-radius:var(--r-md);padding:12px 14px;margin-top:10px;display:flex;align-items:flex-start;gap:8px;line-height:1.5;}
+
+/* ── Panel de documento ── */
+.doc-filter-box{background:var(--bg2);border-radius:var(--r-md);padding:12px 14px;margin-bottom:14px;border:.5px solid var(--border);}
+.doc-filter-label{font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;margin-bottom:10px;color:var(--text);}
+.doc-filter-label span{font-weight:400;color:var(--text2);}
+.doc-sources{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:10px;}
+.doc-drop{border:1.5px dashed var(--border2);border-radius:var(--r-md);padding:1.1rem;text-align:center;cursor:pointer;transition:background .15s;color:var(--text2);font-size:13px;display:flex;flex-direction:column;align-items:center;gap:6px;}
+.doc-drop:hover,.doc-drop.dragover{background:var(--bg2);}
+.doc-drop i{font-size:26px;color:var(--text3);}
+.doc-drop strong{font-size:13px;color:var(--text);}
+.doc-sep{display:flex;align-items:center;gap:8px;margin:2px 0 10px;color:var(--text3);font-size:12px;}
+.doc-sep::before,.doc-sep::after{content:'';flex:1;height:.5px;background:var(--border);}
+
+/* ── Summary de resultados doc ── */
+.doc-summary-box{margin-top:14px;border:.5px solid var(--border);border-radius:var(--r-md);overflow:hidden;}
+.doc-summary-header{padding:10px 14px;background:var(--bg2);font-size:13px;color:var(--text2);border-bottom:.5px solid var(--border);}
+.doc-summary-header strong{color:var(--text);}
+.doc-stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));border-bottom:.5px solid var(--border);}
+.doc-stat{padding:12px 8px;text-align:center;border-right:.5px solid var(--border);}
+.doc-stat:last-child{border-right:none;}
+.doc-stat-num{font-size:24px;font-weight:600;line-height:1;}
+.doc-stat-label{font-size:11px;color:var(--text2);margin-top:4px;line-height:1.3;}
+.stat-found .doc-stat-num{color:var(--success-text);}
+.stat-naauthor .doc-stat-num{color:var(--warning-text);}
+.stat-notfound .doc-stat-num{color:var(--error-text);}
+.stat-total .doc-stat-num{color:var(--text2);}
+.stat-textnotindb .doc-stat-num{color:#7c3aed;}
+@media(prefers-color-scheme:dark){.stat-textnotindb .doc-stat-num{color:#c4b5fd;}}
+.doc-chips-section{padding:12px 14px;}
+.doc-chips-section+.doc-chips-section{border-top:.5px solid var(--border);}
+.chips-label{font-size:12px;font-weight:500;margin-bottom:8px;display:flex;align-items:center;gap:5px;}
+.chips-label.label-found{color:var(--success-text);}
+.chips-label.label-naauthor{color:var(--warning-text);}
+.chips-label.label-notfound{color:var(--error-text);}
+.chips-label.label-textnotindb{color:#7c3aed;}
+@media(prefers-color-scheme:dark){.chips-label.label-textnotindb{color:#c4b5fd;}}
+.chips-label.label-indbnotfilter{color:var(--info-text);}
+.chips-wrap{display:flex;flex-wrap:wrap;gap:5px;}
+.chip-text-notindb{background:#f5f3ff;color:#6d28d9;border:.5px solid #ddd6fe;}
+@media(prefers-color-scheme:dark){.chip-text-notindb{background:#2e1065;color:#c4b5fd;border-color:#4c1d95;}}
+.tni-toolbar{display:flex;justify-content:flex-end;margin-bottom:8px;}
+.tni-list{border:.5px solid var(--border);border-radius:var(--r-md);max-height:340px;overflow:auto;}
+.tni-row{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;border-bottom:.5px solid var(--border);font-size:13px;}
+.tni-row:last-child{border-bottom:none;}
+.tni-row:hover{background:var(--bg2);}
+.tni-num{color:var(--text3);font-size:11px;min-width:22px;text-align:right;padding-top:2px;user-select:none;flex-shrink:0;}
+.tni-text{flex:1;line-height:1.5;word-break:break-word;color:var(--text);user-select:text;}
+.tni-copy{flex-shrink:0;padding:3px 8px;font-size:12px;color:var(--text2);}
+.chip-indbnotfilter{background:var(--info-bg);color:var(--info-text);}
+.stat-indbnotfilter .doc-stat-num{color:var(--info-text);}
+
+/* ── Tabla ── */
+#results-info{font-size:13px;color:var(--text2);margin-bottom:10px;}
+.results-wrap{overflow-x:auto;border:.5px solid var(--border);border-radius:var(--r-md);}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:720px;}
+thead{background:var(--bg2);}
+th{padding:9px 10px;text-align:left;font-weight:500;font-size:12px;color:var(--text2);white-space:nowrap;border-bottom:.5px solid var(--border);}
+td{padding:8px 10px;border-bottom:.5px solid var(--border);vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:var(--bg2);}
+tr.row-notfound td{opacity:.55;}
+tr.row-notfound:hover td{opacity:.75;background:var(--bg2);}
+.td-indicator{width:4px;padding:0;min-width:4px;}
+.ind-exact{background:var(--success-text);}
+.ind-partial{background:var(--warning-text);}
+.ind-notfound{background:var(--error-text);opacity:.6;}
+.td-cod{font-family:monospace;font-size:12px;color:var(--text2);max-width:70px;}
+.td-titulo{font-weight:500;max-width:220px;}
+.td-autor{max-width:150px;}
+.td-año{white-space:nowrap;max-width:60px;}
+.td-url{max-width:130px;}
+.td-curso{font-family:monospace;font-size:12px;max-width:80px;}
+.td-area{max-width:80px;font-size:12px;color:var(--text2);}
+.url-link{color:var(--info-text);text-decoration:none;font-size:12px;display:inline-flex;align-items:center;gap:3px;}
+.url-link:hover{text-decoration:underline;}
+#pagination{display:flex;gap:4px;align-items:center;margin-top:1rem;justify-content:center;flex-wrap:wrap;}
+.pg-btn{min-width:34px;height:34px;padding:0 8px;font-size:13px;justify-content:center;}
+.pg-btn.cur{background:var(--bg2);font-weight:500;}
+.pg-btn:disabled{opacity:.35;cursor:not-allowed;}
+.pg-dots{padding:0 4px;color:var(--text3);font-size:13px;}
+footer{text-align:center;font-size:12px;color:var(--text3);padding:2rem 0 1.5rem;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hinner">
+    <div class="logo"><i class="ti ti-books" aria-hidden="true"></i>Buscador Bibliográfico UCAB</div>
+    <button onclick="toggleSettings()" style="font-size:13px;color:var(--text2)">
+      <i class="ti ti-settings" aria-hidden="true" style="font-size:15px"></i>Configuración
+    </button>
+  </div>
+</header>
+
+<div class="container">
+
+  <div id="settings-panel" class="card">
+    <div class="settings-title">API Key de Anthropic (búsqueda inteligente)</div>
+    <div class="api-row">
+      <input type="password" id="api-key-input" placeholder="sk-ant-api03-...">
+      <button onclick="saveApiKey()">Guardar</button>
+      <button onclick="clearApiKey()" class="sm">Borrar</button>
+    </div>
+    <p class="api-note">La clave se guarda en tu navegador y se usa solo para llamar a la API de Anthropic.<br>
+    Obtén una gratis en <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>. Sin clave, la búsqueda exacta y por documento funcionan sin límites.</p>
+  </div>
+
+  <div id="restore-banner">
+    <div class="rb-left">
+      <i class="ti ti-clock" aria-hidden="true" style="font-size:18px;color:var(--info-text);flex-shrink:0"></i>
+      <div><div style="font-weight:500">Datos guardados encontrados</div><div id="restore-info" style="color:var(--text2);font-size:13px"></div></div>
+    </div>
+    <div class="rb-right">
+      <button class="primary" onclick="restoreData()">Restaurar datos</button>
+      <button onclick="dismissBanner()">Ignorar</button>
+    </div>
+  </div>
+
+  <div id="upload-zone">
+    <i class="ti ti-file-spreadsheet upload-icon" aria-hidden="true"></i>
+    <p style="font-weight:500;margin-bottom:4px;font-size:16px">Sube tu archivo de bibliografía</p>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:18px">Arrastra el archivo aquí · .xlsx, .xls o .csv</p>
+    <button class="primary" onclick="document.getElementById('file-input').click()">
+      <i class="ti ti-folder-open" aria-hidden="true"></i>Seleccionar archivo
+    </button>
+    <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display:none">
+  </div>
+
+  <div id="stats-bar" style="display:none">
+    <span id="stats-text"></span>
+    <div class="sb-right">
+      <span id="save-badge" class="badge badge-success" style="display:none"></span>
+      <button class="sm" onclick="clearStorageConfirm()"><i class="ti ti-trash" aria-hidden="true" style="font-size:12px"></i>Borrar caché</button>
+      <button onclick="resetApp()" style="font-size:13px"><i class="ti ti-refresh" aria-hidden="true" style="font-size:13px"></i>Cambiar archivo</button>
+    </div>
+  </div>
+
+  <div id="search-section" class="card" style="display:none">
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-btn-inteligente" onclick="switchTab('inteligente')"><i class="ti ti-sparkles" aria-hidden="true" style="font-size:15px"></i>Inteligente</button>
+      <button class="tab-btn" id="tab-btn-exacta" onclick="switchTab('exacta')"><i class="ti ti-search" aria-hidden="true" style="font-size:15px"></i>Exacta</button>
+      <button class="tab-btn" id="tab-btn-documento" onclick="switchTab('documento')"><i class="ti ti-file-search" aria-hidden="true" style="font-size:15px"></i>Por documento</button>
+    </div>
+
+    <!-- ── Inteligente ── -->
+    <div id="panel-inteligente">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:8px">Describe en lenguaje natural lo que buscas. Requiere API key de Anthropic en Configuración.</p>
+      <textarea id="nl-query" placeholder="Ej: referencias de contabilidad del curso 00407 publicadas después del 2015..."></textarea>
+      <div class="btn-row">
+        <button class="primary" id="btn-ai-search" onclick="intelligentSearch()"><i class="ti ti-sparkles" aria-hidden="true" style="font-size:14px"></i>Buscar con IA</button>
+        <button onclick="clearIntelligent()">Limpiar</button>
+      </div>
+      <div id="ai-status"></div>
+      <div id="ai-chips"></div>
+      <div id="no-api-msg" class="no-api-msg" style="display:none">
+        <i class="ti ti-key" aria-hidden="true" style="font-size:16px;flex-shrink:0"></i>
+        Configura tu API key en <strong>Configuración</strong> para habilitar la búsqueda inteligente.
+      </div>
+    </div>
+
+    <!-- ── Exacta ── -->
+    <div id="panel-exacta" style="display:none">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:8px">Filtra por uno o más campos. Los resultados se actualizan mientras escribes.</p>
+      <div class="search-grid">
+        <input id="f-codigo" placeholder="Código..." oninput="liveExactSearch()">
+        <input id="f-titulo" placeholder="Título..." oninput="liveExactSearch()">
+        <input id="f-autor" placeholder="Autor..." oninput="liveExactSearch()">
+        <input id="f-año" placeholder="Año..." oninput="liveExactSearch()">
+        <input id="f-curso" placeholder="Nº Curso..." oninput="liveExactSearch()">
+        <input id="f-area" placeholder="Área / Materia..." oninput="liveExactSearch()">
+      </div>
+      <div class="btn-row"><button onclick="clearExact()">Limpiar filtros</button></div>
+    </div>
+
+    <!-- ── Por documento ── -->
+    <div id="panel-documento" style="display:none">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">
+        Sube o pega una bibliografía. El buscador detecta qué referencias coinciden con la base de datos por título, autor y año.
+      </p>
+
+      <!-- Filtro de código -->
+      <div class="doc-filter-box">
+        <div class="doc-filter-label">
+          <i class="ti ti-filter" aria-hidden="true" style="font-size:15px;color:var(--text3)"></i>
+          Filtro de la base de datos
+          <span>— acotar qué registros comparar (opcional)</span>
+        </div>
+        <div class="search-grid" style="margin-bottom:0">
+          <input id="doc-f-curso"  placeholder="Nº Curso (ej: 00370)...">
+          <input id="doc-f-area"   placeholder="Área (ej: ADCO)...">
+          <input id="doc-f-codigo" placeholder="Código de referencia...">
+        </div>
+      </div>
+
+      <!-- Carga de documentos -->
+      <div class="doc-sources">
+        <div class="doc-drop" id="drop-docx" onclick="document.getElementById('input-docx').click()">
+          <i class="ti ti-file-word" aria-hidden="true"></i>
+          <strong>Documento Word</strong>
+          <span style="font-size:12px">.docx</span>
+          <input type="file" id="input-docx" accept=".docx" style="display:none">
+        </div>
+        <div class="doc-drop" id="drop-pdf" onclick="document.getElementById('input-pdf').click()">
+          <i class="ti ti-file-type-pdf" aria-hidden="true"></i>
+          <strong>Documento PDF</strong>
+          <span style="font-size:12px">.pdf</span>
+          <input type="file" id="input-pdf" accept=".pdf" style="display:none">
+        </div>
+      </div>
+
+      <div class="doc-sep">o pega el texto directamente</div>
+      <textarea id="doc-text" placeholder="Pega aquí la lista de referencias bibliográficas..."></textarea>
+
+      <div class="btn-row">
+        <button class="primary" id="btn-doc-search" onclick="docSearch()">
+          <i class="ti ti-file-search" aria-hidden="true" style="font-size:14px"></i>Buscar referencias
+        </button>
+        <button onclick="clearDoc()">Limpiar</button>
+      </div>
+      <div id="doc-status"></div>
+
+      <!-- Summary de resultados -->
+      <div id="doc-summary-box" class="doc-summary-box" style="display:none">
+        <div class="doc-summary-header" id="doc-summary-header"></div>
+        <div class="doc-stats-row">
+          <div class="doc-stat stat-found"><div class="doc-stat-num" id="stat-found">0</div><div class="doc-stat-label">coinciden con BD</div></div>
+          <div class="doc-stat stat-naauthor" id="stat-naauthor-cell" style="display:none"><div class="doc-stat-num" id="stat-naauthor">0</div><div class="doc-stat-label">coinciden (autor N/A)</div></div>
+          <div class="doc-stat stat-notfound" id="stat-notfound-cell" style="display:none"><div class="doc-stat-num" id="stat-notfound">0</div><div class="doc-stat-label">no están en texto</div></div>
+          <div class="doc-stat stat-total" id="stat-total-cell" style="display:none"><div class="doc-stat-num" id="stat-total">0</div><div class="doc-stat-label">en el filtro</div></div>
+          <div class="doc-stat stat-textnotindb" id="stat-textnotindb-cell" style="display:none"><div class="doc-stat-num" id="stat-textnotindb">0</div><div class="doc-stat-label">texto sin coincidencia</div></div>
+          <div class="doc-stat stat-indbnotfilter" id="stat-indbnotfilter-cell" style="display:none"><div class="doc-stat-num" id="stat-indbnotfilter">0</div><div class="doc-stat-label">en BD (fuera filtro)</div></div>
+        </div>
+        <!-- Chips: BD → texto (coinciden) -->
+        <div class="doc-chips-section" id="found-chips-section">
+          <div class="chips-label label-found"><i class="ti ti-check-circle" aria-hidden="true" style="font-size:13px"></i><span id="found-label">Coinciden con el documento</span></div>
+          <div id="doc-found-table"></div>
+        </div>
+        <!-- Chips: BD → texto (coinciden) pero con AUTOR N/A en la BD -->
+        <div class="doc-chips-section" id="naauthor-section" style="display:none">
+          <div class="chips-label label-naauthor"><i class="ti ti-user-off" aria-hidden="true" style="font-size:13px"></i><span id="naauthor-label">Coinciden con la BD — autor sin registrar (N/A)</span></div>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.5">Estas referencias coinciden con un registro de la base de datos, pero ese registro tiene el autor marcado como N/A, por lo que la coincidencia no se pudo confirmar por autor. Conviene revisarlas.</p>
+          <div id="doc-naauthor-table"></div>
+        </div>
+        <!-- Chips: BD → texto (no encontradas, solo con filtro) -->
+        <div class="doc-chips-section" id="notfound-chips-section" style="display:none">
+          <div class="chips-label label-notfound"><i class="ti ti-circle-x" aria-hidden="true" style="font-size:13px"></i>No encontradas en el documento</div>
+          <div class="chips-wrap" id="doc-notfound-chips"></div>
+        </div>
+        <!-- Chips: texto en BD pero fuera del filtro activo (NEW) -->
+        <div class="doc-chips-section" id="indbnotfilter-section" style="display:none">
+          <div class="chips-label label-indbnotfilter"><i class="ti ti-database" aria-hidden="true" style="font-size:13px"></i><span id="indbnotfilter-label">En la base de datos (fuera del filtro)</span></div>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.5">Estas referencias del texto sí están registradas en la base de datos, pero corresponden a registros fuera del filtro aplicado.</p>
+          <div id="indbnotfilter-table"></div>
+        </div>
+        <!-- Chips: texto → BD (referencias del texto que NO están en la BD) -->
+        <div class="doc-chips-section" id="text-notindb-section" style="display:none">
+          <div class="chips-label label-textnotindb">
+            <i class="ti ti-alert-triangle" aria-hidden="true" style="font-size:13px"></i>
+            <span id="text-notindb-label">Referencias del texto sin coincidencia en la base de datos</span>
+          </div>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.5">Estas entradas aparecen en el texto pero no se encontró ningún registro equivalente en la base de datos.</p>
+          <div id="text-notindb-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Resultados ── -->
+  <div id="results-section" class="card" style="display:none">
+    <div id="results-info"></div>
+    <div class="results-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:4px;padding:0"></th>
+            <th style="width:7%">Código</th>
+            <th style="width:27%">Título</th>
+            <th style="width:15%">Autor</th>
+            <th style="width:7%">Año</th>
+            <th style="width:20%">URL</th>
+            <th style="width:10%">Nº Curso</th>
+            <th style="width:8%">Área</th>
+          </tr>
+        </thead>
+        <tbody id="results-body"></tbody>
+      </table>
+    </div>
+    <div id="pagination"></div>
+  </div>
+
+  <footer>Buscador Bibliográfico UCAB · Datos almacenados localmente en tu navegador</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+if(typeof pdfjsLib!=='undefined') pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+const STORAGE_KEY='ucab-biblio-v4', APIKEY_KEY='ucab-biblio-apikey', PAGE_SIZE=25;
+let allData=[], filteredData=[], currentPage=1, currentFileName='';
+// ── Estado persistente por pestaña (se guarda al salir, se restaura al volver) ──
+const tabSnap={inteligente:null, exacta:null, documento:null};
+let activeTab='inteligente';
+let colMap={codigo:null,titulo:null,autor:null,año:null,url:null,curso:null,area:null,isbn:null};
+let matchQuality=new Map(); // row → 'exact'|'partial'|'notfound'
+let docMode=false, docFilterActive=false;
+let textNotInDB=[];   // líneas del texto sin coincidencia en la BD
+let inDBNotFilter=[]; // líneas del texto en BD pero fuera del filtro activo
+let naAuthorList=[];  // {raw,match} de coincidencias cuyo autor en la BD es N/A
+let docFoundList=[];  // {raw,match} de líneas del texto que coinciden dentro del filtro
+let docSummaryArgs=null; // args del último renderDocSummary para poder restaurarlo
+
+// ── Uploads Excel ──────────────────────────────────────────────────────────
+const uploadZone=document.getElementById('upload-zone');
+const fileInput=document.getElementById('file-input');
+uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('dragover');});
+uploadZone.addEventListener('dragleave',()=>uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop',e=>{e.preventDefault();uploadZone.classList.remove('dragover');if(e.dataTransfer.files[0])loadExcel(e.dataTransfer.files[0]);});
+fileInput.addEventListener('change',e=>{if(e.target.files[0])loadExcel(e.target.files[0]);});
+
+// ── Uploads Doc/PDF ─────────────────────────────────────────────────────────
+['docx','pdf'].forEach(t=>{
+  const drop=document.getElementById('drop-'+t), input=document.getElementById('input-'+t);
+  drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('dragover');});
+  drop.addEventListener('dragleave',()=>drop.classList.remove('dragover'));
+  drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('dragover');if(e.dataTransfer.files[0])loadDoc(e.dataTransfer.files[0]);});
+  input.addEventListener('change',e=>{if(e.target.files[0])loadDoc(e.target.files[0]);});
+});
+
+async function loadDoc(file){
+  const status=document.getElementById('doc-status');
+  const ext=file.name.split('.').pop().toLowerCase();
+  status.textContent='Extrayendo texto del documento...';
+  try{
+    let text='';
+    if(ext==='docx'){const buf=await file.arrayBuffer();text=(await mammoth.extractRawText({arrayBuffer:buf})).value;}
+    else if(ext==='pdf'){text=await extractPdfText(file);}
+    else{alert('Sube un .docx o .pdf');return;}
+    if(!text.trim()){status.textContent='No se pudo extraer texto. Puede ser un PDF escaneado.';return;}
+    document.getElementById('doc-text').value=text;
+    docSearch();
+  }catch(err){status.textContent='Error al leer el documento.';console.error(err);}
+}
+
+async function extractPdfText(file){
+  const buf=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+  const pages=[];
+  for(let i=1;i<=pdf.numPages;i++){
+    const page=await pdf.getPage(i);
+    const tc=await page.getTextContent();
+    pages.push(tc.items.map(it=>it.str).join(' '));
+  }
+  return pages.join('\n');
+}
+
+// ── Normalización ───────────────────────────────────────────────────────────
+function norm(s){return String(s||'').toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");}
+// Normalización para matching de texto: además de minúsculas y sin acentos,
+// colapsa toda la puntuación a espacios y unifica espacios. Hace la comparación
+// de títulos y frases robusta ante diferencias de puntuación entre la base de
+// datos y el documento (comas, puntos, comillas, dos puntos, guiones, paréntesis…).
+function normM(s){return norm(s).replace(/[^a-z0-9]+/g,' ').trim();}
+
+// ── Detección columnas (exacto → parcial) ──────────────────────────────────
+function detectColumns(headers){
+  const patterns={
+    codigo:  ['codigo','signatura','clave','cod_ref'],
+    titulo:  ['titulo','title','nombre_ref','obra'],
+    autor:   ['autor','author','escritor'],
+    año:     ['ano_pub','ano_publicacion','year_pub','fecha_pub'],
+    url:     ['url_link','url','link','enlace'],
+    curso:   ['num_curso','curso','course'],
+    area:    ['cod_materia','area','materia','tema','categoria','subject'],
+    isbn:    ['isbn','issn','isni']
+  };
+  for(const[k,pats]of Object.entries(patterns)){if(colMap[k])continue;for(const h of headers){if(pats.includes(norm(h))){colMap[k]=h;break;}}}
+  for(const[k,pats]of Object.entries(patterns)){if(colMap[k])continue;for(const h of headers){const hn=norm(h);if(pats.some(p=>hn.includes(p))){colMap[k]=h;break;}}}
+  if(!colMap.titulo&&headers[0])colMap.titulo=headers[0];
+  if(!colMap.autor&&headers[1])colMap.autor=headers[1];
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+function fmtDate(iso){try{const d=new Date(iso);return d.toLocaleDateString('es-VE',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+d.toLocaleTimeString('es-VE',{hour:'2-digit',minute:'2-digit'});}catch{return iso;}}
+function isBlank(v){return!v||['N/A','n/a','s.n.','s.f.','—'].includes(String(v).trim());}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function trunc(s,n){s=String(s||'');return s.length>n?s.slice(0,n-1)+'…':s;}
+function renderUrl(v){if(isBlank(v))return'<span style="color:var(--text3)">—</span>';const u=String(v).trim();return`<a href="${esc(u)}" target="_blank" rel="noopener" class="url-link"><i class="ti ti-external-link" aria-hidden="true" style="font-size:11px;flex-shrink:0"></i>${esc(trunc(u.replace(/^https?:\/\//,''),30))}</a>`;}
+function getCell(row,key){return norm(row[colMap[key]]||'');}
+
+// ── Algoritmo de coincidencia ────────────────────────────────────────────────
+const STOP=new Set([
+  'para','como','sobre','entre','este','esta','estos','estas','una','uno',
+  'los','las','del','que','por','con','sin','mas','muy','hay','ser','sus',
+  'the','and','for','with','from','this','that','which','their','have','been','will',
+  'una','unos','unas','los','las','ello','ellos','ellas'
+]);
+
+// Extrae palabras significativas de un título
+function titleWords(titulo){
+  return [...new Set(
+    titulo.split(/[\s:,;.()\[\]"'\/\\–\-«»]+/)
+      .filter(w=>w.length>=3&&!STOP.has(w)&&!/^\d+$/.test(w))
+  )];
+}
+
+// Señales de autor: mínimo 4 chars para evitar iniciales y preposiciones
+function autorSignals(row){
+  const a=normM(String(row[colMap.autor]||''));
+  return a?a.split(' ').filter(p=>p.length>=4):[];
+}
+
+// ── matchRecord: compara un registro de BD contra un segmento de texto ───────
+// Reglas estrictas para evitar falsos positivos:
+//  · El AÑO solo nunca confirma un match — se requiere AUTOR
+//  · Títulos cortos (<18 chars) necesitan autor incluso en coincidencia exacta
+//  · Títulos de 1 palabra clave no matchean por palabras (solo por exacto + autor)
+function matchRecord(row, input, inputTokens){
+  const tokens=inputTokens||new Set(input.split(' '));
+  const titulo=normM(String(row[colMap.titulo]||''));
+  if(!titulo||titulo.length<5) return null;
+
+  // Señales externas (autor y año por palabra completa, no por subcadena,
+  // para evitar falsos positivos como un apellido incrustado en otra palabra)
+  const aSigs=autorSignals(row);
+  const autorHit=aSigs.length>0&&aSigs.some(p=>tokens.has(p));
+
+  const año=String(row[colMap.año]||'').trim();
+  const añoHit=/^\d{4}$/.test(año)&&tokens.has(año);
+
+  // ISBN: señal definitiva
+  const isbn=normM(String(row[colMap.isbn]||'')).replace(/\s/g,'');
+  if(isbn.length>=10&&input.replace(/\s/g,'').includes(isbn)) return'exact';
+
+  // ── 1. Guard de frase contigua (anti-falsos-positivos) ───────────────────
+  // Para títulos ≥15 chars: exige que al menos 12 caracteres CONSECUTIVOS del
+  // título aparezcan juntos en el texto. Elimina coincidencias por palabras
+  // dispersas que coinciden casualmente (ej: "Curso de teoría del derecho"
+  // vs "Curso de Redacción [...] Teoría y Práctica [...]").
+  if(titulo.length>=15){
+    const parts=titulo.split(/\s+/);
+    let phraseOk=false;
+    for(let s=0;s<parts.length&&!phraseOk;s++){
+      let ph='';
+      for(let e=s;e<parts.length;e++){
+        ph=ph?ph+' '+parts[e]:parts[e];
+        if(ph.length>=12&&input.includes(ph)){phraseOk=true;break;}
+      }
+    }
+    if(!phraseOk) return null; // Palabras dispersas → coincidencia no fiable
+  }
+
+  // ── 2. Coincidencia exacta del título ────────────────────────────────────
+  if(input.includes(titulo)){
+    // Título largo (≥18 chars): muy distintivo, acepta sin confirmación
+    if(titulo.length>=18) return'exact';
+    // Título medio (≥10 chars): necesita autor
+    if(titulo.length>=10&&autorHit) return'partial';
+    // Título corto (<10 chars): no es suficientemente distintivo
+    return null;
+  }
+
+  // ── 2. Coincidencia por palabras clave ───────────────────────────────────
+  const words=titleWords(titulo);
+  // Con menos de 2 palabras clave, solo vale el match exacto (ya descartado)
+  if(words.length<2) return null;
+
+  const present=words.filter(w=>input.includes(w));
+  const ratio=present.length/words.length;
+  if(ratio===0) return null;
+
+  // Ratio muy alto + autor → exacto
+  if(ratio>=0.85&&words.length>=3&&autorHit) return'exact';
+
+  // Ratio bueno → AUTOR obligatorio (año solo no es suficiente)
+  if(ratio>=0.65&&words.length>=2&&autorHit) return'partial';
+
+  // Ratio medio → necesita AMBOS (autor y año)
+  if(ratio>=0.50&&words.length>=2&&autorHit&&añoHit) return'partial';
+
+  return null;
+}
+
+// ── Meta precalculada por registro (acelera el scoring) ──────────────────────
+function recMeta(r){
+  const titulo=normM(String(r[colMap.titulo]||''));
+  return {
+    r, titulo,
+    words: titleWords(titulo),
+    aSigs: autorSignals(r),
+    año: String(r[colMap.año]||'').trim(),
+    isbn: normM(String(r[colMap.isbn]||'')).replace(/\s/g,''),
+    naAuthor: isBlank(r[colMap.autor])
+  };
+}
+
+// ── scoreMeta: puntúa un registro contra una línea del texto ─────────────────
+// Devuelve {q,score} o null. Score más alto = mejor candidato (más específico).
+// Reglas anti-genéricos: los títulos de ≤2 palabras o cortos exigen AUTOR; así
+// un título genérico como "Derecho constitucional" no acapara líneas de otras obras.
+function scoreMeta(m, input, tokens){
+  const titulo=m.titulo;
+  if(titulo.length<5) return null;
+  // ISBN: señal definitiva
+  if(m.isbn.length>=10 && input.replace(/\s/g,'').includes(m.isbn)) return {q:'exact',score:5000+titulo.length};
+  const words=m.words, nWords=words.length;
+  const exactTitle=input.includes(titulo);
+  let present=0; for(const w of words) if(input.includes(w)) present++;
+  if(present===0 && !exactTitle) return null;            // sin palabras en común → descartar rápido
+  const autorHit=m.aSigs.length>0 && m.aSigs.some(p=>tokens.has(p));
+  const añoHit=/^\d{4}$/.test(m.año) && tokens.has(m.año);
+  // Racha contigua más larga del título presente en la línea (anti-dispersión)
+  let longestRun=0;
+  if(exactTitle) longestRun=titulo.length;
+  else { const parts=titulo.split(' ');
+    for(let s=0;s<parts.length;s++){ let ph='';
+      for(let e=s;e<parts.length;e++){ ph=ph?ph+' '+parts[e]:parts[e];
+        if(input.includes(ph)){ if(ph.length>longestRun) longestRun=ph.length; } else break; } } }
+  const ratio=nWords?present/nWords:0;
+  if(exactTitle){
+    if(titulo.length>=18 && nWords>=3) return {q:'exact',  score:2000+titulo.length+(autorHit?300:0)+(añoHit?40:0)};
+    if(nWords>=2 && autorHit)          return {q:'partial',score:1200+titulo.length+(añoHit?40:0)};
+    if(titulo.length>=18 && autorHit)  return {q:'partial',score:1150+titulo.length};
+    if(titulo.length>=24)              return {q:'partial',score: 900+titulo.length}; // distintivo sin autor (p.ej. autor N/A)
+    return null;                                          // título genérico sin autor → no fiable
+  }
+  // Título largo citado de forma abreviada: racha contigua larga + autor
+  if(longestRun>=18 && autorHit) return {q:'partial',score:1000+longestRun+(añoHit?40:0)};
+  // Coincidencia por palabras clave (siempre exige autor, con algo de contigüidad)
+  if(longestRun>=12){
+    if(nWords>=3 && ratio>=0.85 && autorHit)           return {q:'exact',  score:1500+Math.round(ratio*100)+(añoHit?40:0)};
+    if(nWords>=2 && ratio>=0.65 && autorHit)           return {q:'partial',score: 800+Math.round(ratio*100)+(añoHit?40:0)};
+    if(nWords>=2 && ratio>=0.50 && autorHit && añoHit) return {q:'partial',score: 600+Math.round(ratio*100)};
+  }
+  return null;
+}
+
+// ── Tabla {raw,match} reutilizable para las listas verde / amarilla / azul ───
+function docMatchTableHTML(list){
+  const rows=list.map(({raw,match})=>{
+    const cod =esc(String(match[colMap.codigo]||'—'));
+    const tit =esc(String(match[colMap.titulo]||'—'));
+    const aut =esc(String(match[colMap.autor]||'—'));
+    const año =isBlank(match[colMap.año])?'—':esc(String(match[colMap.año]));
+    const cur =esc(String(match[colMap.curso]||'—'));
+    const area=esc(String(match[colMap.area]||'—'));
+    const url =match[colMap.url];
+    const urlCell=isBlank(url)?'—':`<a href="${esc(String(url).trim())}" target="_blank" rel="noopener" class="url-link"><i class="ti ti-external-link" aria-hidden="true" style="font-size:11px"></i>${esc(trunc(String(url).trim().replace(/^https?:\/\//,''),22))}</a>`;
+    return`<tr>
+      <td style="font-size:11px;color:var(--text2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(raw)}">${esc(trunc(raw,48))}</td>
+      <td class="td-cod">${cod}</td>
+      <td class="td-titulo" title="${tit}">${esc(trunc(String(match[colMap.titulo]||''),34))}</td>
+      <td class="td-autor" title="${aut}">${esc(trunc(String(match[colMap.autor]||''),22))}</td>
+      <td class="td-año">${año}</td>
+      <td>${urlCell}</td>
+      <td class="td-curso">${cur}</td>
+      <td class="td-area">${area}</td>
+    </tr>`;
+  }).join('');
+  return`<div class="results-wrap" style="margin-top:8px"><table><thead><tr>
+      <th style="width:22%">Referencia en el texto</th>
+      <th style="width:7%">Código</th>
+      <th style="width:20%">Título (BD)</th>
+      <th style="width:13%">Autor</th>
+      <th style="width:6%">Año</th>
+      <th style="width:14%">URL</th>
+      <th style="width:9%">Nº Curso</th>
+      <th style="width:8%">Área</th>
+    </tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+// ── Búsqueda por documento (centrada en el TEXTO) ────────────────────────────
+// Para cada referencia que se pega se elige su MEJOR coincidencia (más específica)
+// y se clasifica una sola vez → los totales suman tu número real de referencias.
+function docSearch(){
+  const text=document.getElementById('doc-text').value;
+  const status=document.getElementById('doc-status');
+
+  const fCurso  = norm(document.getElementById('doc-f-curso').value.trim());
+  const fArea   = norm(document.getElementById('doc-f-area').value.trim());
+  const fCodigo = norm(document.getElementById('doc-f-codigo').value.trim());
+  const hasFilter = !!(fCurso||fArea||fCodigo);
+
+  const subset = hasFilter
+    ? allData.filter(row=>
+        (!fCurso  || getCell(row,'curso').includes(fCurso))&&
+        (!fArea   || getCell(row,'area').includes(fArea))&&
+        (!fCodigo || getCell(row,'codigo').includes(fCodigo)))
+    : allData;
+
+  if(!text.trim()){
+    status.textContent='';
+    document.getElementById('doc-summary-box').style.display='none';
+    filteredData=subset.length<allData.length?subset:[...allData];
+    docMode=false;docFilterActive=false;matchQuality=new Map();
+    docFoundList=[];inDBNotFilter=[];naAuthorList=[];textNotInDB=[];
+    currentPage=1;renderResults();return;
+  }
+
+  const btn=document.getElementById('btn-doc-search');
+  btn.disabled=true;btn.innerHTML='<i class="ti ti-loader" aria-hidden="true"></i>Analizando...';
+  status.textContent='Comparando referencia por referencia...';
+
+  setTimeout(()=>{
+    // Las líneas de continuación ("------:" o "____:") significan "mismo autor que
+    // la entrada anterior": heredamos los apellidos del autor previo a sus tokens,
+    // para poder confirmar la coincidencia por autor también en esas líneas.
+    let prevAuthorToks=[];
+    const linePairs = text.split(/\n+/)
+      .map(l => l.trim())
+      .filter(l => l.length >= 10)
+      .map(l => {
+        const isCont = /^[-_–—]{2,}/.test(l);
+        const n = normM(l);
+        const tokens = new Set(n.split(' '));
+        if(isCont){ prevAuthorToks.forEach(t=>tokens.add(t)); }
+        else { prevAuthorToks = normM(l.split(',')[0]).split(' ').filter(w=>w.length>=4); }
+        return { raw: l, norm: n, tokens };
+      });
+
+    // Meta precalculada (una sola vez) para toda la BD y para el subconjunto del filtro
+    const metaAll = allData.map(recMeta);
+    const subsetSet = hasFilter ? new Set(subset) : null;
+    const metaSub = hasFilter ? metaAll.filter(m=>subsetSet.has(m.r)) : metaAll;
+
+    matchQuality=new Map();
+    docFoundList=[]; inDBNotFilter=[]; naAuthorList=[]; textNotInDB=[];
+    const matchedRecs=new Set();
+
+    for(const p of linePairs){
+      // 1) mejor coincidencia dentro del filtro
+      let best=null;
+      for(const m of metaSub){ const s=scoreMeta(m,p.norm,p.tokens); if(s&&(!best||s.score>best.score)) best={s,m}; }
+      let where='filter';
+      // 2) si no hay y hay filtro, buscar en toda la BD
+      if(!best && hasFilter){
+        for(const m of metaAll){ const s=scoreMeta(m,p.norm,p.tokens); if(s&&(!best||s.score>best.score)) best={s,m}; }
+        where='outside';
+      }
+      if(!best){ textNotInDB.push(p.raw); continue; }
+      const row=best.m.r;
+      matchedRecs.add(row);
+      if(!matchQuality.has(row)) matchQuality.set(row,best.s.q);
+      const item={raw:p.raw, match:row};
+      if(best.m.naAuthor)        naAuthorList.push(item);   // amarilla (autor N/A)
+      else if(where==='outside') inDBNotFilter.push(item);  // azul (fuera del filtro)
+      else                       docFoundList.push(item);   // verde (coincide en filtro)
+    }
+
+    // Registros del filtro que ninguna referencia del texto citó (lista roja)
+    const notFound = hasFilter ? subset.filter(r=>!matchedRecs.has(r)) : [];
+    if(hasFilter) notFound.forEach(r=>matchQuality.set(r,'notfound'));
+
+    const found=[...matchedRecs];
+    filteredData = hasFilter ? [...found, ...notFound] : [...found];
+    docMode=true;docFilterActive=hasFilter;currentPage=1;
+
+    if(found.length===0&&textNotInDB.length>0)
+      status.textContent='Ninguna referencia del texto coincidió con la base de datos. Verifica los títulos.';
+    else status.textContent='';
+
+    renderDocSummary(found, notFound, subset.length, hasFilter);
+    docSummaryArgs={found, notFound, total:subset.length, hasFilter};
+    renderResults();
+
+    btn.disabled=false;btn.innerHTML='<i class="ti ti-file-search" aria-hidden="true" style="font-size:14px"></i>Buscar referencias';
+  },30);
+}
+
+function renderDocSummary(found, notFound, total, hasFilter){
+  const box=document.getElementById('doc-summary-box');
+  if(docFoundList.length===0&&naAuthorList.length===0&&inDBNotFilter.length===0&&textNotInDB.length===0&&!hasFilter){box.style.display='none';return;}
+  box.style.display='block';
+
+  // ── Header (centrado en el texto: cada referencia se cuenta una sola vez) ───
+  const totalLines=docFoundList.length + inDBNotFilter.length + naAuthorList.length + textNotInDB.length;
+  document.getElementById('doc-summary-header').innerHTML=hasFilter
+    ?`De <strong>${total.toLocaleString()}</strong> referencias en el filtro · <strong>${totalLines}</strong> referencias del texto analizadas`
+    :`<strong>${totalLines}</strong> referencias del texto analizadas`;
+
+  // ── Stats ─────────────────────────────────────────────────────────────────
+  document.getElementById('stat-found').textContent=docFoundList.length;
+
+  const nfCell =document.getElementById('stat-notfound-cell');
+  const totCell=document.getElementById('stat-total-cell');
+  const tniCell=document.getElementById('stat-textnotindb-cell');
+  const nibCell=document.getElementById('stat-indbnotfilter-cell');
+  const naCell =document.getElementById('stat-naauthor-cell');
+
+  if(hasFilter){
+    document.getElementById('stat-notfound').textContent=notFound.length;
+    document.getElementById('stat-total').textContent=total;
+    nfCell.style.display='';totCell.style.display='';
+  } else {
+    nfCell.style.display='none';totCell.style.display='none';
+  }
+  if(inDBNotFilter.length>0){
+    document.getElementById('stat-indbnotfilter').textContent=inDBNotFilter.length;
+    nibCell.style.display='';
+  } else { nibCell.style.display='none'; }
+  if(textNotInDB.length>0){
+    document.getElementById('stat-textnotindb').textContent=textNotInDB.length;
+    tniCell.style.display='';
+  } else { tniCell.style.display='none'; }
+  if(naAuthorList.length>0){
+    document.getElementById('stat-naauthor').textContent=naAuthorList.length;
+    naCell.style.display='';
+  } else { naCell.style.display='none'; }
+
+  // ── Tabla: coinciden con la BD dentro del filtro (verde) ──────────────────
+  const foundSection=document.getElementById('found-chips-section');
+  if(docFoundList.length>0){
+    foundSection.style.display='';
+    const flbl=document.getElementById('found-label'); if(flbl) flbl.textContent=
+      `${docFoundList.length} referencia${docFoundList.length!==1?'s':''} ${hasFilter?'coinciden con la BD (dentro del filtro)':'coinciden con la base de datos'}`;
+    document.getElementById('doc-found-table').innerHTML=docMatchTableHTML(docFoundList);
+  } else { foundSection.style.display='none'; }
+
+  // ── Tabla: coinciden pero con AUTOR N/A en la BD (mismo formato que la azul) ─
+  const naSection=document.getElementById('naauthor-section');
+  if(naAuthorList.length>0){
+    naSection.style.display='';
+    document.getElementById('naauthor-label').textContent=
+      `${naAuthorList.length} referencia${naAuthorList.length!==1?'s':''} coincide${naAuthorList.length!==1?'n':''} con la BD — autor sin registrar (N/A)`;
+    document.getElementById('doc-naauthor-table').innerHTML=docMatchTableHTML(naAuthorList);
+  } else { naSection.style.display='none'; }
+
+  // ── Chips: BD no encontradas en texto (filtro) ────────────────────────────
+  const nfSection=document.getElementById('notfound-chips-section');
+  if(hasFilter&&notFound.length>0){
+    nfSection.style.display='';
+    document.getElementById('doc-notfound-chips').innerHTML=
+      notFound.slice(0,40).map(row=>{
+        const t=esc(trunc(String(row[colMap.titulo]||''),44));
+        return`<span class="chip chip-notfound" title="${esc(String(row[colMap.titulo]||''))}"><i class="ti ti-x" aria-hidden="true" style="font-size:11px;flex-shrink:0"></i>${t}</span>`;
+      }).join('')+(notFound.length>40?`<span style="font-size:12px;color:var(--text2);align-self:center">+${notFound.length-40} más</span>`:'');
+  } else { nfSection.style.display='none'; }
+
+  // ── Tabla: coinciden en la BD pero fuera del filtro (azul) ────────────────
+  const nibSection=document.getElementById('indbnotfilter-section');
+  if(inDBNotFilter.length>0){
+    nibSection.style.display='';
+    document.getElementById('indbnotfilter-label').textContent=
+      `${inDBNotFilter.length} referencia${inDBNotFilter.length!==1?'s':''} del texto en la base de datos (fuera del filtro)`;
+    document.getElementById('indbnotfilter-table').innerHTML=docMatchTableHTML(inDBNotFilter);
+  } else { nibSection.style.display='none'; }
+
+  // ── Lista: texto sin ninguna coincidencia en BD (texto completo, copiable) ──
+  const tniSection=document.getElementById('text-notindb-section');
+  if(textNotInDB.length>0){
+    tniSection.style.display='';
+    document.getElementById('text-notindb-label').textContent=
+      `${textNotInDB.length} referencia${textNotInDB.length!==1?'s':''} del texto sin coincidencia en la base de datos`;
+    const items=textNotInDB.map((line,i)=>
+      `<div class="tni-row">
+         <span class="tni-num">${i+1}</span>
+         <span class="tni-text">${esc(line)}</span>
+         <button class="tni-copy" onclick="copyRef(${i},this)" title="Copiar esta referencia"><i class="ti ti-copy" aria-hidden="true" style="font-size:13px"></i></button>
+       </div>`
+    ).join('');
+    document.getElementById('text-notindb-list').innerHTML=
+      `<div class="tni-toolbar"><button class="sm" onclick="copyAllRefs(this)" title="Copiar todas las referencias"><i class="ti ti-clipboard-copy" aria-hidden="true" style="font-size:14px"></i>Copiar todas</button></div>
+       <div class="tni-list">${items}</div>`;
+  } else { tniSection.style.display='none'; }
+}
+
+// ── Copiado al portapapeles (con fallback para file://) ───────────────────────
+function copyToClipboard(text){
+  if(navigator.clipboard&&window.isSecureContext) return navigator.clipboard.writeText(text);
+  return new Promise((resolve,reject)=>{
+    try{
+      const ta=document.createElement('textarea');
+      ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+      document.body.appendChild(ta);ta.focus();ta.select();
+      const ok=document.execCommand('copy');document.body.removeChild(ta);
+      ok?resolve():reject();
+    }catch(e){reject(e);}
+  });
+}
+function flashCopied(btn,label){
+  if(!btn) return;
+  const orig=btn.innerHTML;
+  btn.innerHTML=`<i class="ti ti-check" aria-hidden="true" style="font-size:13px"></i>${label||''}`;
+  setTimeout(()=>{btn.innerHTML=orig;},1200);
+}
+function copyRef(i,btn){
+  const t=textNotInDB[i];if(t==null)return;
+  copyToClipboard(t).then(()=>flashCopied(btn)).catch(()=>alert('No se pudo copiar al portapapeles.'));
+}
+function copyAllRefs(btn){
+  if(!textNotInDB.length)return;
+  copyToClipboard(textNotInDB.join('\n')).then(()=>flashCopied(btn,'Copiado')).catch(()=>alert('No se pudo copiar al portapapeles.'));
+}
+
+function clearDoc(){
+  document.getElementById('doc-text').value='';
+  document.getElementById('doc-status').textContent='';
+  document.getElementById('doc-summary-box').style.display='none';
+  document.getElementById('input-docx').value='';
+  document.getElementById('input-pdf').value='';
+  document.getElementById('doc-f-curso').value='';
+  document.getElementById('doc-f-area').value='';
+  document.getElementById('doc-f-codigo').value='';
+  matchQuality=new Map();textNotInDB=[];inDBNotFilter=[];naAuthorList=[];docFoundList=[];docSummaryArgs=null;docMode=false;docFilterActive=false;
+  filteredData=[...allData];currentPage=1;renderResults();
+}
+
+// ── Settings/API ─────────────────────────────────────────────────────────────
+function toggleSettings(){const p=document.getElementById('settings-panel');p.style.display=p.style.display==='none'?'block':'none';if(p.style.display==='block'){const k=localStorage.getItem(APIKEY_KEY)||'';document.getElementById('api-key-input').value=k?'••••'+k.slice(-4):'';}}
+function saveApiKey(){const v=document.getElementById('api-key-input').value.trim();if(!v||v.startsWith('•')){alert('Ingresa una clave válida.');return;}localStorage.setItem(APIKEY_KEY,v);document.getElementById('api-key-input').value='••••'+v.slice(-4);document.getElementById('no-api-msg').style.display='none';document.getElementById('btn-ai-search').disabled=false;alert('Clave guardada.');}
+function clearApiKey(){localStorage.removeItem(APIKEY_KEY);document.getElementById('api-key-input').value='';checkApiKeyStatus();}
+function checkApiKeyStatus(){const has=!!localStorage.getItem(APIKEY_KEY);document.getElementById('no-api-msg').style.display=has?'none':'flex';document.getElementById('btn-ai-search').disabled=!has;}
+
+// ── Storage ──────────────────────────────────────────────────────────────────
+function checkStorage(){try{const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return;const saved=JSON.parse(raw);if(!saved.rows||!saved.rows.length)return;document.getElementById('restore-info').textContent=`${saved.rows.length.toLocaleString()} registros de "${saved.fileName}" · guardado el ${fmtDate(saved.savedAt)}`;document.getElementById('restore-banner').style.display='flex';}catch(e){}}
+function restoreData(){try{const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return;const saved=JSON.parse(raw);colMap=saved.colMap;currentFileName=saved.fileName;allData=saved.rows.map(([c,t,a,y,u,cr,ar,isbn])=>{const o={[colMap.codigo]:c,[colMap.titulo]:t,[colMap.autor]:a,[colMap.año]:y,[colMap.url]:u,[colMap.curso]:cr,[colMap.area]:ar};if(colMap.isbn)o[colMap.isbn]=isbn||'';return o;});filteredData=[...allData];tabSnap.inteligente=null;tabSnap.exacta=null;tabSnap.documento=null;activeTab='inteligente';['inteligente','exacta','documento'].forEach(t=>{document.getElementById('tab-btn-'+t).classList.toggle('active',t==='inteligente');document.getElementById('panel-'+t).style.display=t==='inteligente'?'block':'none';});dismissBanner();showApp();showBadge('Restaurado · '+fmtDate(saved.savedAt),false);renderResults();}catch(err){alert('No se pudieron restaurar los datos.');}}
+function dismissBanner(){document.getElementById('restore-banner').style.display='none';}
+function saveToStorage(){try{const payload=JSON.stringify({fileName:currentFileName,savedAt:new Date().toISOString(),colMap,rows:allData.map(r=>[r[colMap.codigo]||'',r[colMap.titulo]||'',r[colMap.autor]||'',String(r[colMap.año]||''),r[colMap.url]||'',r[colMap.curso]||'',r[colMap.area]||'',r[colMap.isbn]||''])});localStorage.setItem(STORAGE_KEY,payload);showBadge('Guardado · '+fmtDate(new Date().toISOString()),false);}catch(err){showBadge('Archivo muy grande para guardar',true);}}
+function showBadge(text,warn){const b=document.getElementById('save-badge');b.style.display='inline-flex';b.className='badge '+(warn?'badge-warning':'badge-success');b.innerHTML=`<i class="ti ti-check" aria-hidden="true" style="font-size:11px"></i>${text}`;}
+function clearStorageConfirm(){if(!confirm('¿Borrar los datos guardados?'))return;localStorage.removeItem(STORAGE_KEY);document.getElementById('save-badge').style.display='none';alert('Caché borrado.');}
+
+// ── Load Excel ───────────────────────────────────────────────────────────────
+function loadExcel(file){
+  currentFileName=file.name;
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const raw=XLSX.utils.sheet_to_json(ws,{defval:''});
+      if(!raw.length){alert('El archivo parece estar vacío.');return;}
+      allData=raw;colMap={codigo:null,titulo:null,autor:null,año:null,url:null,curso:null,area:null};
+      detectColumns(Object.keys(raw[0]));filteredData=[...allData];
+      // Nuevo archivo: borrar snapshots y resetear a primera pestaña
+      tabSnap.inteligente=null;tabSnap.exacta=null;tabSnap.documento=null;
+      activeTab='inteligente';
+      ['inteligente','exacta','documento'].forEach(t=>{
+        document.getElementById('tab-btn-'+t).classList.toggle('active',t==='inteligente');
+        document.getElementById('panel-'+t).style.display=t==='inteligente'?'block':'none';
+      });
+      dismissBanner();showApp();renderResults();saveToStorage();
+    }catch(err){alert('No se pudo leer el archivo.');}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function showApp(){
+  uploadZone.style.display='none';
+  document.getElementById('stats-bar').style.display='flex';
+  document.getElementById('search-section').style.display='block';
+  document.getElementById('results-section').style.display='block';
+  const detected=Object.entries(colMap).filter(([,v])=>v).map(([,v])=>v).join(', ');
+  document.getElementById('stats-text').innerHTML=`<i class="ti ti-table" aria-hidden="true" style="font-size:15px;vertical-align:-2px;margin-right:6px"></i><strong>${allData.length.toLocaleString()}</strong> registros · <em>${currentFileName}</em><br><span style="color:var(--text2);font-size:12px">Columnas: ${detected||'ninguna'}</span>`;
+  checkApiKeyStatus();
+}
+
+function resetApp(){
+  allData=[];filteredData=[];currentPage=1;currentFileName='';
+  colMap={codigo:null,titulo:null,autor:null,año:null,url:null,curso:null,area:null,isbn:null};
+  matchQuality=new Map();docMode=false;docFilterActive=false;
+  textNotInDB=[];inDBNotFilter=[];naAuthorList=[];docFoundList=[];
+  // Borrar snapshots y volver a la pestaña inicial
+  tabSnap.inteligente=null;tabSnap.exacta=null;tabSnap.documento=null;
+  activeTab='inteligente';
+  ['inteligente','exacta','documento'].forEach(t=>{
+    document.getElementById('tab-btn-'+t).classList.toggle('active',t==='inteligente');
+    document.getElementById('panel-'+t).style.display=t==='inteligente'?'block':'none';
+  });
+  uploadZone.style.display='block';
+  ['stats-bar','search-section','results-section'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('results-body').innerHTML='';document.getElementById('pagination').innerHTML='';
+  document.getElementById('save-badge').style.display='none';fileInput.value='';checkStorage();
+}
+
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+function switchTab(tab){
+  if(tab===activeTab) return;
+
+  // ── Guardar estado de la pestaña actual ───────────────────────────────────
+  tabSnap[activeTab]={
+    filteredData:[...filteredData],
+    matchQuality:new Map(matchQuality),
+    docMode, docFilterActive,
+    textNotInDB:[...textNotInDB],
+    inDBNotFilter:[...inDBNotFilter],
+    naAuthorList:[...naAuthorList],
+    docFoundList:[...docFoundList],
+    currentPage,
+    summaryArgs: activeTab==='documento' ? docSummaryArgs : null
+  };
+
+  activeTab=tab;
+
+  // ── Cambiar visibilidad ───────────────────────────────────────────────────
+  ['inteligente','exacta','documento'].forEach(t=>{
+    document.getElementById('tab-btn-'+t).classList.toggle('active',t===tab);
+    document.getElementById('panel-'+t).style.display=t===tab?'block':'none';
+  });
+
+  // ── Restaurar estado de la nueva pestaña ──────────────────────────────────
+  const s=tabSnap[tab];
+  if(s){
+    filteredData    =[...s.filteredData];
+    matchQuality    =new Map(s.matchQuality);
+    docMode         =s.docMode;
+    docFilterActive =s.docFilterActive;
+    textNotInDB     =[...s.textNotInDB];
+    inDBNotFilter   =[...s.inDBNotFilter];
+    naAuthorList    =[...(s.naAuthorList||[])];
+    docFoundList    =[...(s.docFoundList||[])];
+    currentPage     =s.currentPage;
+    // Restaurar resumen del documento si aplica
+    if(tab==='documento'){
+      docSummaryArgs=s.summaryArgs||null;
+      if(docSummaryArgs&&docMode){
+        const{found,notFound,total,hasFilter}=docSummaryArgs;
+        renderDocSummary(found,notFound,total,hasFilter);
+      }
+    }
+  } else {
+    // Primera visita a esta pestaña: mostrar todos los datos sin filtro
+    filteredData=[...allData];
+    matchQuality=new Map();
+    docMode=false; docFilterActive=false;
+    textNotInDB=[]; inDBNotFilter=[]; naAuthorList=[]; docFoundList=[];
+    currentPage=1;
+    if(tab==='documento') docSummaryArgs=null;
+  }
+  renderResults();
+}
+
+// ── Búsqueda exacta ──────────────────────────────────────────────────────────
+function liveExactSearch(){
+  docMode=false;docFilterActive=false;matchQuality=new Map();
+  // No tocamos doc-summary-box: pertenece a la pestaña documento
+  const f={codigo:norm(document.getElementById('f-codigo').value),titulo:norm(document.getElementById('f-titulo').value),autor:norm(document.getElementById('f-autor').value),año:norm(document.getElementById('f-año').value),curso:norm(document.getElementById('f-curso').value),area:norm(document.getElementById('f-area').value)};
+  const active=Object.values(f).some(v=>v);
+  filteredData=active?allData.filter(row=>(!f.codigo||getCell(row,'codigo').includes(f.codigo))&&(!f.titulo||getCell(row,'titulo').includes(f.titulo))&&(!f.autor||getCell(row,'autor').includes(f.autor))&&(!f.año||getCell(row,'año').includes(f.año))&&(!f.curso||getCell(row,'curso').includes(f.curso))&&(!f.area||getCell(row,'area').includes(f.area))):[...allData];
+  currentPage=1;renderResults();
+}
+function clearExact(){['f-codigo','f-titulo','f-autor','f-año','f-curso','f-area'].forEach(id=>document.getElementById(id).value='');filteredData=[...allData];docMode=false;currentPage=1;renderResults();}
+
+// ── Búsqueda inteligente ─────────────────────────────────────────────────────
+function clearIntelligent(){document.getElementById('nl-query').value='';document.getElementById('ai-status').textContent='';document.getElementById('ai-chips').innerHTML='';filteredData=[...allData];docMode=false;currentPage=1;renderResults();}
+async function intelligentSearch(){
+  const apiKey=localStorage.getItem(APIKEY_KEY);if(!apiKey){checkApiKeyStatus();return;}
+  const query=document.getElementById('nl-query').value.trim();if(!query){document.getElementById('ai-status').textContent='Escribe una consulta primero.';return;}
+  const btn=document.getElementById('btn-ai-search'),status=document.getElementById('ai-status'),chips=document.getElementById('ai-chips');
+  btn.disabled=true;btn.innerHTML='<i class="ti ti-loader" aria-hidden="true"></i>Interpretando...';status.textContent='Analizando consulta...';chips.innerHTML='';
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:256,system:`Eres asistente de búsqueda para base de datos bibliográfica (CODIGO,TITULO,AUTOR,AÑO_PUBLICACION,NUM_CURSO,COD_MATERIA). Extrae criterios y devuelve ÚNICAMENTE JSON: {"codigo":"","titulo":"","autor":"","año_min":0,"año_max":0,"curso":"","area":""}. Solo campos mencionados. Minúsculas. Sin texto adicional.`,messages:[{role:'user',content:query}]})});
+    if(!res.ok){const err=await res.json();status.textContent='Error: '+(err.error?.message||res.status);return;}
+    const data=await res.json();
+    let text=data.content[0].text.trim().replace(/```json|```/g,'').trim();
+    const f=JSON.parse(text);docMode=false;matchQuality=new Map();
+    filteredData=allData.filter(row=>{
+      const c=getCell(row,'codigo'),t=getCell(row,'titulo'),a=getCell(row,'autor'),y=parseInt(row[colMap.año])||0,cr=getCell(row,'curso'),ar=getCell(row,'area');
+      return(!f.codigo||c.includes(norm(f.codigo)))&&(!f.titulo||t.includes(norm(f.titulo)))&&(!f.autor||a.includes(norm(f.autor)))&&(!f.año_min||y>=f.año_min)&&(!f.año_max||y<=f.año_max)&&(!f.curso||cr.includes(norm(f.curso)))&&(!f.area||ar.includes(norm(f.area)));
+    });
+    currentPage=1;
+    const labels={codigo:'Código',titulo:'Título',autor:'Autor',año_min:'Año ≥',año_max:'Año ≤',curso:'Curso',area:'Área'};
+    const entries=Object.entries(f).filter(([,v])=>v);
+    status.textContent=entries.length?'Filtros detectados:':'Sin filtros específicos.';
+    chips.innerHTML=entries.map(([k,v])=>`<span class="chip chip-info"><i class="ti ti-check" aria-hidden="true" style="font-size:11px"></i>${labels[k]||k}: ${v}</span>`).join('');
+    renderResults();
+  }catch(err){status.textContent='Error al interpretar la consulta.';console.error(err);}
+  finally{btn.disabled=false;btn.innerHTML='<i class="ti ti-sparkles" aria-hidden="true" style="font-size:14px"></i>Buscar con IA';}
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function renderResults(){
+  const total=filteredData.length,start=(currentPage-1)*PAGE_SIZE,end=Math.min(start+PAGE_SIZE,total),page=filteredData.slice(start,end);
+  let infoText='';
+  if(total===0) infoText='Sin resultados para esta búsqueda.';
+  else if(docMode&&docFilterActive) infoText=`${total.toLocaleString()} referencias del filtro (encontradas y no encontradas)`;
+  else infoText=`Mostrando ${(start+1).toLocaleString()}–${end.toLocaleString()} de ${total.toLocaleString()} resultados`;
+  document.getElementById('results-info').textContent=infoText;
+
+  const tbody=document.getElementById('results-body');
+  if(!page.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:2.5rem;color:var(--text3)">Sin resultados</td></tr>';renderPagination(total);return;}
+
+  tbody.innerHTML=page.map(row=>{
+    const q=matchQuality.get(row)||'';
+    let indClass='', rowClass='';
+    if(q==='exact') indClass='ind-exact';
+    else if(q==='partial') indClass='ind-partial';
+    else if(q==='notfound'){indClass='ind-notfound';rowClass='row-notfound';}
+    const indCell=`<td class="td-indicator ${indClass}" title="${q==='exact'?'Coincidencia exacta':q==='partial'?'Coincidencia parcial':q==='notfound'?'No encontrada en el documento':''}"></td>`;
+    const c=esc(row[colMap.codigo]),t=esc(row[colMap.titulo]),a=esc(row[colMap.autor]),y=esc(row[colMap.año]),cr=esc(row[colMap.curso]),ar=esc(row[colMap.area]);
+    return`<tr class="${rowClass}">${indCell}<td class="td-cod" title="${c}">${c||'—'}</td><td class="td-titulo" title="${t}">${t||'—'}</td><td class="td-autor" title="${a}">${a||'—'}</td><td class="td-año">${isBlank(y)?'—':y}</td><td class="td-url">${renderUrl(row[colMap.url])}</td><td class="td-curso" title="${cr}">${cr||'—'}</td><td class="td-area" title="${ar}">${ar||'—'}</td></tr>`;
+  }).join('');
+  renderPagination(total);
+}
+
+function renderPagination(total){
+  const totalPages=Math.ceil(total/PAGE_SIZE),pg=document.getElementById('pagination');
+  if(totalPages<=1){pg.innerHTML='';return;}
+  const range=[];for(let i=1;i<=totalPages;i++){if(i===1||i===totalPages||Math.abs(i-currentPage)<=2)range.push(i);else if(range[range.length-1]!=='...')range.push('...');}
+  let html=`<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}><i class="ti ti-arrow-left" aria-hidden="true" style="font-size:13px"></i></button>`;
+  range.forEach(p=>{if(p==='...')html+=`<span class="pg-dots">…</span>`;else html+=`<button class="pg-btn ${p===currentPage?'cur':''}" onclick="goPage(${p})">${p}</button>`;});
+  html+=`<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}><i class="ti ti-arrow-right" aria-hidden="true" style="font-size:13px"></i></button>`;
+  pg.innerHTML=html;
+}
+
+function goPage(n){const t=Math.ceil(filteredData.length/PAGE_SIZE);if(n<1||n>t)return;currentPage=n;renderResults();window.scrollTo({top:document.getElementById('results-section').offsetTop-80,behavior:'smooth'});}
+
+checkStorage();
+</script>
+</body>
+</html>
