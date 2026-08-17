@@ -1,7 +1,7 @@
 param([int]$Port = 8000, [string]$Root = ".")
 
 $Root = (Resolve-Path $Root).Path
-$default = "buscador_bibliografico_ucab 1.2.html"
+$default = "buscador_bibliografico_ucab.html"
 
 $mime = @{
   ".html" = "text/html; charset=utf-8"
