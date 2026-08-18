@@ -487,8 +487,17 @@ function matchRecord(row, input){
 
   // ── 2. Coincidencia exacta del título ────────────────────────────────────
   if(input.includes(titulo)){
-    // Título largo (≥18 chars): muy distintivo, acepta sin confirmación
-    if(titulo.length>=18) return'exact';
+    // Título largo (≥18 chars): muy distintivo. Un registro CON autor solo se
+    // confirma por título si su autor aparece en la cita, o si la cita no trae
+    // autor identificable. Si la cita trae OTRO autor (texto antes del título),
+    // no es fiable — evita atribuir "Manual de Derecho Administrativo" (Peña) al
+    // registro "Derecho administrativo" (Araujo) solo por compartir el título.
+    if(titulo.length>=18){
+      if(!aSigs.length || autorHit) return'exact';   // registro N/A, o autor coincide
+      const region=input.slice(0, input.indexOf(titulo));
+      const citaTraeAutor=region.split(/[^a-z0-9]+/).some(w=>w.length>=4 && !/^\d{4}$/.test(w));
+      return citaTraeAutor ? null : 'exact';          // otro autor → no; sin autor → fallback solo-título
+    }
     // Título medio (≥10 chars): necesita autor
     if(titulo.length>=10&&autorHit) return'partial';
     // Título corto (<10 chars): no es suficientemente distintivo
