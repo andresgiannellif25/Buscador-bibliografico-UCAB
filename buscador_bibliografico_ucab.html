@@ -447,24 +447,45 @@ function autorSignals(row){
   return a.split(/[\s,.\-\/]+/).filter(p=>p.length>=4);
 }
 
+// ── Metadatos precomputados por registro ─────────────────────────────────────
+// Título normalizado, señales de autor, palabras clave, año e ISBN se calculan
+// UNA sola vez por registro (al cargar/restaurar el Excel) y se reutilizan en
+// cada búsqueda, en vez de recalcularlos en cada llamada a matchRecord.
+// NB: son exactamente los mismos valores que antes se computaban inline → no
+// cambia ningún criterio de comparación, solo evita el recálculo repetido.
+let recMetaCache=new WeakMap();
+function computeRecMeta(row){
+  const titulo=norm(String(row[colMap.titulo]||''));
+  return {
+    titulo,
+    aSigs: autorSignals(row),
+    año:   String(row[colMap.año]||'').trim(),
+    isbn:  norm(String(row[colMap.isbn]||'')).replace(/[-\s]/g,''),
+    words: titleWords(titulo)
+  };
+}
+function getRecMeta(row){ let m=recMetaCache.get(row); if(!m){ m=computeRecMeta(row); recMetaCache.set(row,m); } return m; }
+function buildRecMeta(){ recMetaCache=new WeakMap(); for(const row of allData) recMetaCache.set(row, computeRecMeta(row)); }
+
 // ── matchRecord: compara un registro de BD contra un segmento de texto ───────
 // Reglas estrictas para evitar falsos positivos:
 //  · El AÑO solo nunca confirma un match — se requiere AUTOR
 //  · Títulos cortos (<18 chars) necesitan autor incluso en coincidencia exacta
 //  · Títulos de 1 palabra clave no matchean por palabras (solo por exacto + autor)
 function matchRecord(row, input){
-  const titulo=norm(String(row[colMap.titulo]||''));
+  const m=getRecMeta(row);              // metadatos precomputados (mismos valores, sin recálculo)
+  const titulo=m.titulo;
   if(!titulo||titulo.length<5) return null;
 
   // Señales externas
-  const aSigs=autorSignals(row);
+  const aSigs=m.aSigs;
   const autorHit=aSigs.length>0&&aSigs.some(p=>input.includes(p));
 
-  const año=String(row[colMap.año]||'').trim();
+  const año=m.año;
   const añoHit=/^\d{4}$/.test(año)&&input.includes(año);
 
   // ISBN: señal definitiva
-  const isbn=norm(String(row[colMap.isbn]||'')).replace(/[-\s]/g,'');
+  const isbn=m.isbn;
   if(isbn.length>=10&&input.replace(/[-\s]/g,'').includes(isbn)) return'exact';
 
   // ── 1. Guard de frase contigua (anti-falsos-positivos) ───────────────────
@@ -505,7 +526,7 @@ function matchRecord(row, input){
   }
 
   // ── 2. Coincidencia por palabras clave ───────────────────────────────────
-  const words=titleWords(titulo);
+  const words=m.words;
   // Con menos de 2 palabras clave, solo vale el match exacto (ya descartado)
   if(words.length<2) return null;
 
@@ -777,7 +798,7 @@ function checkApiKeyStatus(){const has=!!localStorage.getItem(APIKEY_KEY);docume
 
 // ── Storage ──────────────────────────────────────────────────────────────────
 function checkStorage(){try{const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return;const saved=JSON.parse(raw);if(!saved.rows||!saved.rows.length)return;document.getElementById('restore-info').textContent=`${saved.rows.length.toLocaleString()} registros de "${saved.fileName}" · guardado el ${fmtDate(saved.savedAt)}`;document.getElementById('restore-banner').style.display='flex';}catch(e){}}
-function restoreData(){try{const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return;const saved=JSON.parse(raw);colMap=saved.colMap;currentFileName=saved.fileName;allData=saved.rows.map(([c,t,a,y,u,cr,ar])=>({[colMap.codigo]:c,[colMap.titulo]:t,[colMap.autor]:a,[colMap.año]:y,[colMap.url]:u,[colMap.curso]:cr,[colMap.area]:ar}));filteredData=[...allData];tabSnap.inteligente=null;tabSnap.exacta=null;tabSnap.documento=null;activeTab='inteligente';['inteligente','exacta','documento'].forEach(t=>{document.getElementById('tab-btn-'+t).classList.toggle('active',t==='inteligente');document.getElementById('panel-'+t).style.display=t==='inteligente'?'block':'none';});dismissBanner();showApp();showBadge('Restaurado · '+fmtDate(saved.savedAt),false);renderResults();}catch(err){alert('No se pudieron restaurar los datos.');}}
+function restoreData(){try{const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return;const saved=JSON.parse(raw);colMap=saved.colMap;currentFileName=saved.fileName;allData=saved.rows.map(([c,t,a,y,u,cr,ar])=>({[colMap.codigo]:c,[colMap.titulo]:t,[colMap.autor]:a,[colMap.año]:y,[colMap.url]:u,[colMap.curso]:cr,[colMap.area]:ar}));filteredData=[...allData];buildRecMeta();tabSnap.inteligente=null;tabSnap.exacta=null;tabSnap.documento=null;activeTab='inteligente';['inteligente','exacta','documento'].forEach(t=>{document.getElementById('tab-btn-'+t).classList.toggle('active',t==='inteligente');document.getElementById('panel-'+t).style.display=t==='inteligente'?'block':'none';});dismissBanner();showApp();showBadge('Restaurado · '+fmtDate(saved.savedAt),false);renderResults();}catch(err){alert('No se pudieron restaurar los datos.');}}
 function dismissBanner(){document.getElementById('restore-banner').style.display='none';}
 function saveToStorage(){try{const payload=JSON.stringify({fileName:currentFileName,savedAt:new Date().toISOString(),colMap,rows:allData.map(r=>[r[colMap.codigo]||'',r[colMap.titulo]||'',r[colMap.autor]||'',String(r[colMap.año]||''),r[colMap.url]||'',r[colMap.curso]||'',r[colMap.area]||''])});localStorage.setItem(STORAGE_KEY,payload);showBadge('Guardado · '+fmtDate(new Date().toISOString()),false);}catch(err){showBadge('Archivo muy grande para guardar',true);}}
 function showBadge(text,warn){const b=document.getElementById('save-badge');b.style.display='inline-flex';b.className='badge '+(warn?'badge-warning':'badge-success');b.innerHTML=`<i class="ti ti-check" aria-hidden="true" style="font-size:11px"></i>${text}`;}
@@ -794,7 +815,7 @@ function loadExcel(file){
       const raw=XLSX.utils.sheet_to_json(ws,{defval:''});
       if(!raw.length){alert('El archivo parece estar vacío.');return;}
       allData=raw;colMap={codigo:null,titulo:null,autor:null,año:null,url:null,curso:null,area:null};
-      detectColumns(Object.keys(raw[0]));filteredData=[...allData];
+      detectColumns(Object.keys(raw[0]));filteredData=[...allData];buildRecMeta();
       // Nuevo archivo: borrar snapshots y resetear a primera pestaña
       tabSnap.inteligente=null;tabSnap.exacta=null;tabSnap.documento=null;
       activeTab='inteligente';
