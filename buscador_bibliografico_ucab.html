@@ -95,6 +95,8 @@ button.sm{font-size:12px;padding:6px 10px;color:var(--text2);}
 .chips-label.label-indbnotfilter{color:var(--info-text);}
 .chips-wrap{display:flex;flex-wrap:wrap;gap:5px;}
 .chip-text-notindb{background:#f5f3ff;color:#6d28d9;border:.5px solid #ddd6fe;}
+.chip-copy{background:transparent;border:none;padding:0;margin:0 0 0 2px;cursor:pointer;color:inherit;opacity:.55;display:inline-flex;flex-shrink:0;border-radius:4px;}
+.chip-copy:hover{opacity:1;}
 @media(prefers-color-scheme:dark){.chip-text-notindb{background:#2e1065;color:#c4b5fd;border-color:#4c1d95;}}
 .chip-indbnotfilter{background:var(--info-bg);color:var(--info-text);}
 .stat-indbnotfilter .doc-stat-num{color:var(--info-text);}
@@ -297,9 +299,12 @@ footer{text-align:center;font-size:12px;color:var(--text3);padding:2rem 0 1.5rem
         </div>
         <!-- Chips: texto → BD (referencias del texto que NO están en la BD) -->
         <div class="doc-chips-section" id="text-notindb-section" style="display:none">
-          <div class="chips-label label-textnotindb">
-            <i class="ti ti-alert-triangle" aria-hidden="true" style="font-size:13px"></i>
-            <span id="text-notindb-label">Referencias del texto sin coincidencia en la base de datos</span>
+          <div class="chips-label label-textnotindb" style="justify-content:space-between">
+            <span style="display:inline-flex;align-items:center;gap:5px;min-width:0">
+              <i class="ti ti-alert-triangle" aria-hidden="true" style="font-size:13px;flex-shrink:0"></i>
+              <span id="text-notindb-label">Referencias del texto sin coincidencia en la base de datos</span>
+            </span>
+            <button id="btn-copy-tni" type="button" onclick="copyTniAll(this)" title="Copiar todas para cargar a Banner 9" style="padding:4px 10px;font-size:12px;flex-shrink:0"><i class="ti ti-copy" aria-hidden="true" style="font-size:13px"></i>Copiar todas</button>
           </div>
           <p style="font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.5">Estas entradas aparecen en el texto pero no se encontró ningún registro equivalente en la base de datos.</p>
           <div class="chips-wrap" id="text-notindb-chips"></div>
@@ -771,10 +776,35 @@ function renderDocSummary(found, notFound, total, hasFilter){
     document.getElementById('text-notindb-label').textContent=
       `${textNotInDB.length} referencia${textNotInDB.length!==1?'s':''} del texto sin coincidencia en la base de datos`;
     document.getElementById('text-notindb-chips').innerHTML=
-      textNotInDB.slice(0,50).map(line=>
-        `<span class="chip chip-text-notindb" title="${esc(line)}"><i class="ti ti-database-x" aria-hidden="true" style="font-size:11px;flex-shrink:0"></i>${esc(trunc(line,58))}</span>`
+      textNotInDB.slice(0,50).map((line,i)=>
+        `<span class="chip chip-text-notindb" title="${esc(line)}"><i class="ti ti-database-x" aria-hidden="true" style="font-size:11px;flex-shrink:0"></i><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(trunc(line,58))}</span><button class="chip-copy" type="button" onclick="copyTniOne(${i},this)" title="Copiar esta referencia" aria-label="Copiar referencia"><i class="ti ti-copy" aria-hidden="true" style="font-size:12px"></i></button></span>`
       ).join('')+(textNotInDB.length>50?`<span style="font-size:12px;color:var(--text2);align-self:center;padding:4px 8px">+${textNotInDB.length-50} más</span>`:'');
   } else { tniSection.style.display='none'; }
+}
+
+// Copiar referencias de categoría D (sin coincidencia en la BD) — tal cual el texto pegado
+function copyToClipboard(text){
+  if(navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+  return new Promise((res,rej)=>{ // fallback para file:// (contexto no seguro)
+    try{ const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.left='-9999px';
+      document.body.appendChild(ta); ta.select(); const ok=document.execCommand('copy'); document.body.removeChild(ta);
+      ok?res():rej(); }catch(e){ rej(e); }
+  });
+}
+function flashBtn(btn,ok,okHtml,errHtml){ // coalesce clics rápidos: guarda el rótulo original una sola vez
+  if(btn._flashTimer) clearTimeout(btn._flashTimer); else btn._origHtml=btn.innerHTML;
+  btn.innerHTML=ok?okHtml:errHtml;
+  btn._flashTimer=setTimeout(()=>{btn.innerHTML=btn._origHtml;btn._flashTimer=null;},1300);
+}
+function copyTniAll(btn){ if(!textNotInDB.length) return;
+  copyToClipboard(textNotInDB.join('\n'))
+    .then(()=>flashBtn(btn,true,'<i class="ti ti-check" aria-hidden="true" style="font-size:13px"></i>¡Copiado!','<i class="ti ti-x" aria-hidden="true" style="font-size:13px"></i>Error'))
+    .catch(()=>flashBtn(btn,false,'','<i class="ti ti-x" aria-hidden="true" style="font-size:13px"></i>Error'));
+}
+function copyTniOne(i,btn){ const line=textNotInDB[i]; if(line==null) return;
+  copyToClipboard(line)
+    .then(()=>flashBtn(btn,true,'<i class="ti ti-check" aria-hidden="true" style="font-size:12px"></i>','<i class="ti ti-x" aria-hidden="true" style="font-size:12px"></i>'))
+    .catch(()=>flashBtn(btn,false,'','<i class="ti ti-x" aria-hidden="true" style="font-size:12px"></i>'));
 }
 
 function clearDoc(){
