@@ -1,79 +1,149 @@
-# Buscador Bibliográfico UCAB
+# Buscador Bibliográfico · UCAB Derecho
 
-Herramienta web para buscar y cotejar referencias contra la base de datos
-bibliográfica de la Facultad de Derecho de la UCAB. Es un **único archivo HTML**
-con JavaScript vanilla — sin backend, sin build, sin dependencias que instalar.
-Se abre con doble clic o sirviéndolo como archivo estático.
+Herramienta web que verifica, contra el sistema oficial de la universidad, qué
+referencias de un programa de materia ya están registradas, cuáles están mal
+vinculadas al curso y cuáles nunca se cargaron — un cotejo que hoy se hace a mano,
+línea por línea.
 
-Archivo principal: `buscador_bibliografico_ucab.html`
+**Un solo archivo HTML. Sin backend, sin instalación. Se abre con doble clic.**
 
-## Estructura del proyecto
-- `buscador_bibliografico_ucab.html` — App completa (HTML + CSS + JS en un solo archivo)
-- `Bibliografía_UCAB Corregido.xlsx` — Base de datos fuente (la app solo lee, no la modifica)
+![Encabezado del Buscador Bibliográfico con la identidad visual de UCAB Derecho](docs/captura-encabezado.png)
 
-## Columnas del Excel
-`CODIGO, TITULO, AUTOR, AÑO_PUBLICACION, URL_LINK, NUM_CURSO, COD_MATERIA, ISBN`
+---
 
-Las columnas se detectan automáticamente por nombre de cabecera.
+## El problema
 
-## Stack
-- HTML + CSS + JavaScript vanilla, todo en un archivo. Tema claro/oscuro automático.
-- Sin backend ni build. Datos persistidos en `localStorage`.
-- Librerías cargadas por CDN, **con SRI (`integrity` + `crossorigin`)**:
-  [SheetJS/xlsx](https://sheetjs.com) (Excel), [mammoth.js](https://github.com/mwilliamson/mammoth.js) (Word),
-  [pdf.js](https://mozilla.github.io/pdf.js/) (PDF) y [Tabler Icons](https://tabler.io/icons).
-- La búsqueda inteligente usa la API de Anthropic (opcional, requiere API key propia).
+En la Facultad de Derecho de la UCAB, cada programa de materia trae una bibliografía
+de decenas de referencias. Para saber si esas obras están disponibles para los
+estudiantes, alguien tiene que revisar, **una por una**, si cada referencia ya está
+cargada en **Banner 9** (el sistema académico oficial) y correctamente vinculada al
+curso.
+
+Ese cotejo manual es lento y propenso a errores: hay que distinguir tres situaciones
+distintas que a simple vista se confunden —
+
+1. La obra **ya está** en el sistema y vinculada al curso correcto.
+2. La obra **existe** en el sistema pero **no está vinculada** a ese curso (mal
+   catalogada).
+3. La obra **nunca se registró** y hay que cargarla.
+
+Esta herramienta automatiza ese cotejo: se carga la base bibliográfica oficial
+(exportada de Banner 9, **11.237 registros**), se pega la bibliografía de un programa,
+y en segundos clasifica cada referencia en la categoría que le corresponde.
+
+---
+
+## Cómo funciona — cotejo por documento
+
+El corazón de la app. Se pega o se sube la bibliografía (texto, Word `.docx` o PDF) y
+cada referencia se clasifica y se colorea según su estado.
+
+**Resumen instantáneo.** Cada referencia del programa cae en una de cuatro categorías,
+contadas y listadas en chips de colores:
+
+![Resumen del cotejo: la fila de las cuatro categorías con las referencias en chips de colores](docs/captura-por-documento-resumen.png)
+
+| Color | Categoría | Qué significa para el cotejo |
+|---|---|---|
+| 🟢 **Verde** | Coincide | La referencia ya está cargada y vinculada al curso. |
+| 🔵 **Azul** | En la base, fuera del filtro | Existe en el sistema, pero **no** vinculada a este curso (mal catalogada). |
+| 🟣 **Violeta** | Sin coincidencia | **Nunca se registró** — hay que cargarla a Banner 9. |
+| 🔴 **Rojo** | No citada | Registros que el sistema tiene para el curso y que el programa no menciona. |
+
+**Detalle registro por registro.** Cada fila lleva su barra de estado del color
+correspondiente, y las referencias faltantes se copian de un clic para pasárselas a
+quien las carga al sistema:
+
+![Tabla detallada de resultados con la barra de estado por fila y el botón "Copiar todas"](docs/captura-por-documento-tabla.png)
+
+El emparejamiento es **puramente léxico** (sin IA de por medio): compara título exacto,
+solapamiento de palabras clave (ignorando *stopwords*), rachas de frase contigua, y
+confirma con autor, año e ISBN. Las reglas son conservadoras para no dar falsos
+positivos: el año por sí solo nunca confirma un match, y los títulos cortos exigen
+coincidencia de autor.
+
+Las referencias **sin coincidencia** (las que hay que cargar) se copian con un botón
+—individualmente o todas de una vez— para pasárselas directo a quien las registra en
+el sistema.
+
+---
 
 ## Funcionalidades
 
-### 1. Búsqueda exacta
-Filtro por campos (código, título, autor, año, curso, área) que se aplica en vivo
-mientras se escribe.
+- **Tres modos de búsqueda:**
+  - **Por documento** — el cotejo masivo descrito arriba, con las cuatro categorías.
+  - **Exacta** — filtro por campos (código, título, autor, año, curso, área) que se
+    aplica en vivo mientras se escribe.
+  - **Inteligente (opcional)** — convierte una consulta en lenguaje natural en filtros,
+    usando la API de Anthropic. Requiere una API key propia; sin ella, los otros dos
+    modos funcionan sin límites.
+- **Sistema de 4 categorías coloreadas** que responde, de un vistazo, las tres
+  preguntas del cotejo manual.
+- **Botón de copiado** para las referencias faltantes (categoría "sin coincidencia").
+- **Persistencia local** (`localStorage`): al recargar ofrece restaurar la última base
+  cargada.
 
-### 2. Búsqueda inteligente (IA)
-Convierte una consulta en lenguaje natural en filtros de campo usando la API de
-Anthropic. Requiere una API key propia, que se guarda solo en tu navegador
-(`localStorage`). Sin key, las otras dos búsquedas funcionan igual.
+---
 
-### 3. Búsqueda por documento
-Pegas o subes una bibliografía (texto, Word `.docx` o PDF) y la app compara cada
-referencia contra la base de datos, clasificándola en:
-- **Coincide** con la base de datos
-- **En la BD, fuera del filtro** activo
-- **Sin coincidencia** en la base de datos
-- Y, si hay un filtro activo, los registros del filtro que **ninguna** referencia citó.
+## Stack técnico
 
-En la tabla de resultados, cada fila lleva una barra de color: **verde** (coincidencia
-total), **naranja** (coincidencia parcial) y **rojo** (registro cargado en el filtro
-pero no encontrado en el texto).
+- **HTML + CSS + JavaScript vanilla**, todo en **un único archivo**. Sin frameworks,
+  sin backend, sin paso de build.
+- Corre en cualquier navegador moderno — doble clic o servido como archivo estático.
+- Lectura de Excel/Word/PDF en el navegador vía librerías por CDN (SheetJS, mammoth.js,
+  pdf.js), cargadas **con SRI** (`integrity` + `crossorigin`).
+- Identidad visual de UCAB Derecho: rojo institucional `#c5080e`, tipografías Poppins +
+  Open Sans, logo oficial. Tema claro.
 
-**Motor de matching (léxico).** El emparejamiento es puramente léxico, sin
-aprendizaje automático:
-- `matchRecord` compara un registro contra un segmento de texto y devuelve
-  `exact` / `partial` / sin coincidencia, combinando: coincidencia exacta de
-  título, solapamiento de palabras clave (ignorando *stopwords*), una **racha de
-  frase contigua** (anti-coincidencias por palabras dispersas), y confirmación por
-  **autor**, **año** e **ISBN**.
-- `bestMatch` elige la mejor coincidencia de cada registro a lo largo del texto.
-- Reglas conservadoras para evitar falsos positivos: el año por sí solo nunca
-  confirma un match; los títulos cortos exigen coincidencia de autor.
+Que sea un solo archivo es una decisión de diseño: la herramienta la usa personal
+administrativo sin entorno técnico, así que tenía que abrirse sin instalar nada y sin
+depender de un servidor.
 
-Otras características:
-- Persistencia local (`localStorage`): al recargar ofrece restaurar la última base cargada.
-- Estado por pestaña: cambiar de pestaña no reinicia la búsqueda en curso.
+---
 
-## Seguridad
-- **SRI** en los 4 recursos CDN (`integrity="sha512-…"` + `crossorigin`): protege
-  ante un CDN comprometido que pudiera inyectar código y leer la API key del `localStorage`.
-- **Validación de esquema en URLs**: los enlaces del Excel solo se vuelven clicables
-  si empiezan por `http://` o `https://` (evita esquemas peligrosos como `javascript:`).
-- **Manejo de error de lectura**: un fallo al leer el Excel se reporta en vez de quedar en silencio.
-- La API key nunca se guarda en el archivo ni en el repo — solo en el `localStorage`
-  del navegador. No usar en un equipo compartido.
+## Proceso de ingeniería
 
-## Uso
-1. Abre el HTML en el navegador.
-2. Sube tu Excel (o restaura el guardado).
-3. Elige una pestaña de búsqueda y empieza.
+El proyecto no se quedó en "funciona": pasó por varias etapas de endurecimiento,
+todas trazables en el historial de commits.
 
-Para búsqueda inteligente: pega tu API key de Anthropic en Configuración.
+- **Auditoría de seguridad.** Se añadió *Subresource Integrity* a los recursos de CDN
+  (protege ante un CDN comprometido que pudiera inyectar código), validación de esquema
+  en las URLs de la base (solo `http`/`https`, cerrando esquemas peligrosos como
+  `javascript:`) y manejo explícito de errores de lectura de archivos.
+- **Corrección de precisión del matching, validada con datos reales.** Se cerró un
+  falso positivo concreto (una cita que se emparejaba con el autor equivocado)
+  endureciendo la regla de coincidencia por título, y se verificó el resultado contra
+  la base completa de 11.237 registros para confirmar que no rompía coincidencias
+  legítimas.
+- **Optimización de rendimiento.** Los metadatos derivados de cada registro (título
+  normalizado, señales de autor, palabras clave) se precomputan una sola vez al cargar
+  la base y se reutilizan, en lugar de recalcularse en cada comparación. En pruebas con
+  la base real completa, el tiempo de cotejo bajó de ~1996 ms a ~1235 ms.
+
+---
+
+## Cómo correrlo localmente
+
+No requiere instalación ni dependencias.
+
+1. Clona o descarga el repositorio.
+2. Abre `buscador_bibliografico_ucab.html` en el navegador (doble clic).
+3. Sube tu base bibliográfica en Excel (o restaura la última guardada).
+4. Elige un modo de búsqueda y empieza.
+
+> Para la **búsqueda inteligente** (opcional), pega tu propia API key de Anthropic en
+> Configuración. Se guarda solo en tu navegador (`localStorage`) y nunca sale de tu
+> equipo.
+
+Si prefieres servirlo como archivo estático (por ejemplo para probar la carga de
+`.docx`/`.pdf` sin restricciones de `file://`), cualquier servidor estático sirve.
+
+---
+
+## Estructura del proyecto
+
+```
+buscador_bibliografico_ucab.html   La app completa (HTML + CSS + JS en un archivo)
+DESIGN.md                          Guía de identidad visual (paleta, tipografía, componentes)
+README.md                          Este archivo
+```
