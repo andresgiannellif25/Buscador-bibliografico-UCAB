@@ -1,3 +1,5 @@
+🇪🇸 Español | 🇺🇸 [English](README.en.md)
+
 # Buscador Bibliográfico · UCAB Derecho
 
 Herramienta web que verifica, contra el sistema oficial de la universidad, qué
