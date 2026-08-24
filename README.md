@@ -148,4 +148,16 @@ Si prefieres servirlo como archivo estático (por ejemplo para probar la carga d
 buscador_bibliografico_ucab.html   La app completa (HTML + CSS + JS en un archivo)
 DESIGN.md                          Guía de identidad visual (paleta, tipografía, componentes)
 README.md                          Este archivo
+README.en.md                       Versión en inglés
+LICENSE                            Licencia MIT del código + nota sobre la marca UCAB
+docs/                               Capturas usadas en el README
 ```
+
+---
+
+## Licencia
+
+Código bajo licencia [MIT](LICENSE). El nombre, logo e identidad visual de
+"UCAB Derecho" son marca de la Universidad Católica Andrés Bello, se usan aquí
+solo con fines demostrativos/de portafolio, y **no** están cubiertos por esta
+licencia.

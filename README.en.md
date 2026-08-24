@@ -142,5 +142,17 @@ without `file://` restrictions), any static server works.
 ```
 buscador_bibliografico_ucab.html   The complete app (HTML + CSS + JS in one file)
 DESIGN.md                          Visual identity guide (palette, typography, components)
+README.md                          Spanish version
 README.en.md                       This file
+LICENSE                            MIT license for the code + note on the UCAB trademark
+docs/                               Screenshots used in the README
 ```
+
+---
+
+## License
+
+Code licensed under [MIT](LICENSE). The name, logo, and visual identity of
+"UCAB Derecho" are trademarks of Universidad Católica Andrés Bello, used here
+for demonstration/portfolio purposes only, and are **not** covered by this
+license.
