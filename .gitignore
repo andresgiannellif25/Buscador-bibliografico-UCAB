@@ -16,3 +16,6 @@ $RECYCLE.BIN/
 
 # Backups locales (versiones muertas del HTML)
 backups/
+
+# Base bibliográfica real (datos institucionales, no para portafolio público)
+Bibliografía_UCAB Corregido.xlsx
